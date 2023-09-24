@@ -37,10 +37,26 @@ private:
     void getMenuButton(double& value, double& limit, double& tolerance, bool& button, bool& buttonEvent);
     double analogToDigital(double value, limits& limit);
 public:
-    AnalogInputs(TFT_eSPI& tft, DigitalValues& newDigitalValues);
+    AnalogInputs(TFT_eSPI& newTft, DigitalValues& newDigitalValues);
     void doFunction();
     void showValue();
+
+    void showMenu();
+    void showTitle();
+    void up();
+    void down();
+    void left();
+    void right();
+    void center();
 };
+
+void AnalogInputs::showMenu(){};
+void AnalogInputs::showTitle(){};
+void AnalogInputs::up(){};
+void AnalogInputs::down(){};
+void AnalogInputs::left(){};
+void AnalogInputs::right(){};
+void AnalogInputs::center(){};
 
 AnalogInputs::AnalogInputs(TFT_eSPI& newTft, DigitalValues& newDigitalValues) : RadioClass(newTft, newDigitalValues)
 {

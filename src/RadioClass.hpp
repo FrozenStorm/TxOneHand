@@ -9,21 +9,20 @@ class RadioClass
 {
 
 protected:
-    void limitValue(double& value);
     TFT_eSPI& tft;
     DigitalValues& digitalValues;
-    /* data */
+    void limitValue(double& value);
 public:
     RadioClass(TFT_eSPI& newTft, DigitalValues& newDigitalValues): tft(newTft), digitalValues(newDigitalValues){}
-    void doFunction();
-    void showMenu();
-    void showValue();
-    void showTitle();
-    void up();
-    void down();
-    void left();
-    void right();
-    void center();
+    virtual void doFunction();
+    virtual void showMenu();
+    virtual void showValue();
+    virtual void showTitle();
+    virtual void up();
+    virtual void down();
+    virtual void left();
+    virtual void right();
+    virtual void center();
 };
 
 void RadioClass::limitValue(double& value)

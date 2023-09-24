@@ -14,6 +14,8 @@
 #include "Expo.hpp"
 #include "Trim.hpp"
 #include "RadioMenu.hpp"
+#include "DualRate.hpp"
+#include <EEPROM.h>
 
 /* -------------------- Defines --------------------------------------------------------------------------------*/
 #define PIN_MULTI_TX          43
@@ -41,11 +43,9 @@ char                              txData[27] = {0x55,0x06,0x20,0x07,0x00,0x24,0x
 DigitalValues                     digitalValues = DigitalValues();
 AnalogInputs                      analogInputs = AnalogInputs(tft, digitalValues);
 Expo                              expo = Expo(tft, digitalValues);
+DualRate                          dualRate = DualRate(tft, digitalValues);
 Trim                              trim = Trim(tft, digitalValues);
-
-//RadioMenu                              menu = RadioMenu(trim, digitalValues);
-
-
+RadioMenu                         menu = RadioMenu(&trim, digitalValues);
 /* -------------------- Functions Prototypes -------------------------------------------------------------------*/
 void readSensor(void);
 void sendTxData(void);
@@ -54,6 +54,13 @@ void sendTxData(void);
 void setup() {
 
   Serial.begin(115200);
+
+  // Menu
+  menu.addEntry(&expo);
+  menu.addEntry(&dualRate);
+
+  // EEPROM
+  EEPROM.begin(1);
 
   // Display
   tft.init();
@@ -112,35 +119,23 @@ void loop() {
   if (targetTime < millis()) {
     targetTime += 100;
 
-    tft.fillScreen(TFT_BLACK);
-    tft.setCursor(15, 140, 2);
-    tft.setTextColor(TFT_WHITE,TFT_BLACK);  
-    tft.setTextSize(1);
-
-    tft.println("TxOneHand by Z-Craft");
-    tft.println();
-    analogInputs.showValue();
-    // menu.showMenu();
-    trim.showMenu();
     
-
-    gnss.serialRead();
-    tft.printf("D,T=%s,%s\n",gnss.UTCDate.c_str(),gnss.UTCTime.c_str());
-    tft.printf("lat=%.7f\n",gnss.lat);
-    tft.printf("lon=%.7f\n",gnss.lon);
-    tft.printf("vel,cou=%.2f,%.2f\n",gnss.velocity, gnss.course);
+    // analogInputs.showValue();
+    menu.showMenu();
+    
+    // gnss.serialRead();
+    // tft.printf("D,T=%s,%s\n",gnss.UTCDate.c_str(),gnss.UTCTime.c_str());
+    // tft.printf("lat=%.7f\n",gnss.lat);
+    // tft.printf("lon=%.7f\n",gnss.lon);
+    // tft.printf("vel,cou=%.2f,%.2f\n",gnss.velocity, gnss.course);
 
     // readSensor();
   }
   analogInputs.doFunction();
-  // menu.processInputs();
-  if(digitalValues.upEvent == true) trim.up();
-  if(digitalValues.downEvent == true) trim.down();
-  if(digitalValues.leftEvent == true) trim.left();
-  if(digitalValues.rightEvent == true) trim.right();
-  if(digitalValues.centerEvent == true) trim.center();
+  menu.processInputs();
   expo.doFunction();
   trim.doFunction();
+  dualRate.doFunction();
   sendTxData();
 
   delay(10);

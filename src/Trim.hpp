@@ -22,14 +22,20 @@ private:
     void drawSlider(uint8_t posW, uint8_t posH, uint8_t lenW, uint8_t lenH, double value);
 public:
     Trim(TFT_eSPI& newTft, DigitalValues& newDigitalValues) : RadioClass(newTft, newDigitalValues){}
-    void doFunction();
-    void showMenu();
-    void up();
-    void down();
-    void left();
-    void right();
-    void center();
+    void doFunction() override;
+    void showMenu() override;
+    void up() override;
+    void down() override;
+    void left() override;
+    void right() override;
+    void center() override;
+
+    void showValue();
+    void showTitle();
 };
+
+void Trim::showValue(){};
+void Trim::showTitle(){};
 
 void Trim::doFunction()
 {
@@ -87,6 +93,17 @@ void Trim::showMenu()
     //tft.print(trimStickLeftRight);
     //tft.print(",");
     //tft.println(trimStickUpDown);
+    tft.fillScreen(TFT_BLACK);
+    tft.setCursor(15, 140, 2);
+    tft.setTextColor(TFT_WHITE,TFT_BLACK);  
+    tft.setTextSize(1);
+
+    tft.println("TxOneHand by Z-Craft");
+    tft.println();
+    tft.print("Battery = ");
+    tft.print(digitalValues.batteryVoltage);
+    tft.println("V");
+
     drawStick(DISP_WIDTH/2, 60, 50, digitalValues.stickLeftRight, digitalValues.stickUpDown);
     drawTrimH(DISP_WIDTH/2-50, 120, 100, 10, trimStickLeftRight);
     drawTrimV(DISP_WIDTH/2-50-20, 10, 10, 100, trimStickUpDown);
