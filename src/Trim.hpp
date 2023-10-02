@@ -3,25 +3,17 @@
 
 #include "RadioClass.hpp"
 
-#define DISP_WIDTH            170
-#define DISP_HEIGHT           320
-
 class Trim : public RadioClass
 {
 private:
-    double stepSize = 0.01;
-    int maxSteps = 20;
-    int trimStickLeftRight = 0;
-    int trimStickUpDown = 0;
-    int trimSlider = 0;
-    void calcTrim(double& value, int trim);
-    void changeTrim(int& trim, bool moreNotLess);
-    void drawTrimH(uint8_t posW, uint8_t posH, uint8_t lenW, uint8_t lenH, double value);
-    void drawTrimV(uint8_t posW, uint8_t posH, uint8_t lenW, uint8_t lenH, double value);
-    void drawStick(uint8_t posW, uint8_t posH, uint8_t rad, double valueW, double valueH);
-    void drawSlider(uint8_t posW, uint8_t posH, uint8_t lenW, uint8_t lenH, double value);
+    void calcTrim(double& value, const int trim);
+    void changeTrim(int& trim, const bool moreNotLess);
+    void drawTrimH(int posW, int posH, int lenW, int lenH, double value);
+    void drawTrimV(int posW, int posH, int lenW, int lenH, double value);
+    void drawStick(int posW, int posH, int rad, double valueW, double valueH);
+    void drawSlider(int posW, int posH, int lenW, int lenH, double value);
 public:
-    Trim(TFT_eSPI& newTft, DigitalValues& newDigitalValues) : RadioClass(newTft, newDigitalValues){}
+    Trim(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
     void doFunction() override;
     void showMenu() override;
     void up() override;
@@ -31,43 +23,46 @@ public:
     void center() override;
 
     void showValue();
-    void showTitle();
+    const char * getTitle();
 };
 
 void Trim::showValue(){};
-void Trim::showTitle(){};
+const char * Trim::getTitle()
+{
+    return "Trim";
+}
 
 void Trim::doFunction()
 {
-    calcTrim(digitalValues.stickLeftRight,trimStickLeftRight);
-    calcTrim(digitalValues.stickUpDown,trimStickUpDown);
-    calcTrim(digitalValues.slider,trimSlider);
+    calcTrim(radioData.functionData.roll,radioData.trimData.roll);
+    calcTrim(radioData.functionData.pitch,radioData.trimData.pitch);
+    calcTrim(radioData.functionData.throttle,radioData.trimData.slider);
 }
 
-void Trim::calcTrim(double& value, int trim)
+void Trim::calcTrim(double& value, const int trim)
 {
-    value += trim * stepSize;
+    value += trim * radioData.trimData.stepSize;
     limitValue(value);
 }
 
 void Trim::up() 
 {
-    changeTrim(trimStickUpDown, true);
+    changeTrim(radioData.trimData.pitch, true);
 }
 
 void Trim::down()
 {
-    changeTrim(trimStickUpDown, false);
+    changeTrim(radioData.trimData.pitch, false);
 }
 
 void Trim::left()
 {
-    changeTrim(trimStickLeftRight, false);
+    changeTrim(radioData.trimData.roll, false);
 }
 
 void Trim::right()
 {
-    changeTrim(trimStickLeftRight, true);
+    changeTrim(radioData.trimData.roll, true);
 }
 
 void Trim::center()
@@ -75,13 +70,13 @@ void Trim::center()
 
 }
 
-void Trim::changeTrim(int& trim, bool moreNotLess)
+void Trim::changeTrim(int& trim, const bool moreNotLess)
 {
-    if(moreNotLess == true && trim < maxSteps)
+    if(moreNotLess == true && trim < radioData.trimData.stepCountLimit)
     {
         trim++;
     }
-    if(moreNotLess == false && trim > -maxSteps)
+    if(moreNotLess == false && trim > -radioData.trimData.stepCountLimit)
     {
         trim--;
     }
@@ -89,52 +84,37 @@ void Trim::changeTrim(int& trim, bool moreNotLess)
 
 void Trim::showMenu()
 {
-    //tft.print("Trim l-r,u|d=");
-    //tft.print(trimStickLeftRight);
-    //tft.print(",");
-    //tft.println(trimStickUpDown);
-    tft.fillScreen(TFT_BLACK);
-    tft.setCursor(15, 140, 2);
-    tft.setTextColor(TFT_WHITE,TFT_BLACK);  
-    tft.setTextSize(1);
-
-    tft.println("TxOneHand by Z-Craft");
-    tft.println();
-    tft.print("Battery = ");
-    tft.print(digitalValues.batteryVoltage);
-    tft.println("V");
-
-    drawStick(DISP_WIDTH/2, 60, 50, digitalValues.stickLeftRight, digitalValues.stickUpDown);
-    drawTrimH(DISP_WIDTH/2-50, 120, 100, 10, trimStickLeftRight);
-    drawTrimV(DISP_WIDTH/2-50-20, 10, 10, 100, trimStickUpDown);
-    drawSlider(DISP_WIDTH/2+50+10, 10, 20, 120, digitalValues.slider);
+    drawStick(tft.width()/2, tft.height()/2+90, 45, radioData.functionData.roll, radioData.functionData.pitch);
+    drawTrimH(tft.width()/2-45, tft.height()/2+145, 90, 10, radioData.trimData.roll);
+    drawTrimV(tft.width()/2-50-20, tft.height()/2+45, 10, 90, radioData.trimData.pitch);
+    drawSlider(tft.width()/2+50+10, tft.height()/2+45, 20, 110, radioData.functionData.throttle);
 }
 
-void Trim::drawTrimH(uint8_t posW, uint8_t posH, uint8_t lenW, uint8_t lenH, double value){
+void Trim::drawTrimH(int posW, int posH, int lenW, int lenH, double value){
   static double valueLast = 0;
   double pos = 0;
-  pos = posW+lenW/2+valueLast/maxSteps*lenW/2;
+  pos = posW+lenW/2+valueLast/radioData.trimData.stepCountLimit*lenW/2;
   tft.drawLine(pos,posH,pos,posH+lenH-1,TFT_BLACK);
   tft.drawRect(posW, posH, lenW, lenH,TFT_WHITE);
   tft.drawLine(posW+lenW/2,posH,posW+lenW/2,posH+lenH-1,TFT_WHITE);
-  pos = posW+lenW/2+value/maxSteps*lenW/2;
+  pos = posW+lenW/2+value/radioData.trimData.stepCountLimit*lenW/2;
   tft.drawLine(pos,posH,pos,posH+lenH-1,TFT_RED);
   valueLast = value;
 } 
 
-void Trim::drawTrimV(uint8_t posW, uint8_t posH, uint8_t lenW, uint8_t lenH, double value){
+void Trim::drawTrimV(int posW, int posH, int lenW, int lenH, double value){
   static double valueLast = 0;
   double pos = 0;
-  pos = posH+lenH/2-valueLast/maxSteps*lenH/2;
+  pos = posH+lenH/2-valueLast/radioData.trimData.stepCountLimit*lenH/2;
   tft.drawLine(posW,int(pos),posW+lenW-1,int(pos),TFT_BLACK);
   tft.drawRect(posW, posH, lenW, lenH, TFT_WHITE);
   tft.drawLine(posW,posH+lenH/2,posW+lenW-1,posH+lenH/2,TFT_WHITE);
-  pos = posH+lenH/2-value/maxSteps*lenH/2;
+  pos = posH+lenH/2-value/radioData.trimData.stepCountLimit*lenH/2;
   tft.drawLine(posW,int(pos),posW+lenW-1,int(pos),TFT_RED);
   valueLast = value;
 }
 
-void Trim::drawStick(uint8_t posW, uint8_t posH, uint8_t rad, double valueW, double valueH){
+void Trim::drawStick(int posW, int posH, int rad, double valueW, double valueH){
   static double valueWLast = 0;
   static double valueHLast = 0;
 
@@ -149,7 +129,7 @@ void Trim::drawStick(uint8_t posW, uint8_t posH, uint8_t rad, double valueW, dou
   valueHLast = valueH;
 }
 
-void Trim::drawSlider(uint8_t posW, uint8_t posH, uint8_t lenW, uint8_t lenH, double value){
+void Trim::drawSlider(int posW, int posH, int lenW, int lenH, double value){
   static double valueLast = 0;
   double pos = 0;
   pos = posH+lenH/2-valueLast*lenH/2;

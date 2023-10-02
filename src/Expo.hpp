@@ -7,17 +7,16 @@
 class Expo : public RadioClass
 {
 private:
-    double expoStickLeftRight = 0.3;
-    double expoStickUpDown = 0.3;
-    double expoSlider = 0;
-    void calcExpo(double& value, double expo);
+    enum MenuEntries{PITCH, ROLL, THROTTLE};
+    MenuEntries selectedMenuEntry = PITCH;
+    void calcExpo(double& value, const double expo);
 public:
-    Expo(TFT_eSPI& newTft, DigitalValues& newDigitalValues) : RadioClass(newTft, newDigitalValues){}
+    Expo(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
     void doFunction();
 
     void showMenu();
     void showValue();
-    void showTitle();
+    const char * getTitle();
     void up();
     void down();
     void left();
@@ -26,57 +25,111 @@ public:
 };
 
 void Expo::showValue(){};
-void Expo::showTitle(){};
+const char * Expo::getTitle()
+{
+    return "Expo";
+}
 void Expo::center(){};
 
 void Expo::showMenu()
 {
-    tft.fillScreen(TFT_BLACK);
-    tft.setCursor(15, 140, 2);
-    tft.setTextColor(TFT_WHITE,TFT_BLACK);  
-    tft.setTextSize(1);
+    char myString[20];
+    int posH = tft.height()/2+20;
+    int posW = 20;
+    int incH = 20;
+    sprintf(myString,"pitch = %.0f%%\n",radioData.expoData.pitch*100);
+    tft.drawString(myString, posW, posH);
+    sprintf(myString,"roll = %.0f%%\n",radioData.expoData.roll*100);
+    tft.drawString(myString, posW, posH+incH);
+    sprintf(myString,"throttle = %.0f%%\n",radioData.expoData.throttle*100);
+    tft.drawString(myString, posW, posH+incH*2);
 
-    tft.println("TxOneHand by Z-Craft");
-    tft.println();
-
-    tft.println("Expo");
-
-    tft.printf("expoStickLeftRight = %.0f%%\n",expoStickLeftRight*100);
-
-    tft.printf("expoStickUpDown = %.0f%%\n",expoStickUpDown*100);
-    
-    tft.printf("expoSlider = %.0f%%\n",expoSlider*100);
+    tft.drawTriangle(0,posH+incH*selectedMenuEntry,0,posH+incH+incH*selectedMenuEntry,posW/1.5,posH+incH/2+incH*selectedMenuEntry,TFT_WHITE);
 }
 
 void Expo::up()
 {
-    expoStickUpDown+=0.05;
-    limitValue(expoStickUpDown);
+    switch (selectedMenuEntry)
+    {
+    case PITCH:
+        selectedMenuEntry = THROTTLE;
+        break;
+    case ROLL:
+        selectedMenuEntry = PITCH;
+        break;
+    case THROTTLE:
+        selectedMenuEntry = ROLL;
+        break;
+    default:
+        break;
+    }    
 }
 void Expo::down()
 {
-    expoStickUpDown-=0.05;
-    limitValue(expoStickUpDown);
+    switch (selectedMenuEntry)
+    {
+    case PITCH:
+        selectedMenuEntry = ROLL;
+        break;
+    case ROLL:
+        selectedMenuEntry = THROTTLE;
+        break;
+    case THROTTLE:
+        selectedMenuEntry = PITCH;
+        break;
+    default:
+        break;
+    }
 }
 void Expo::left()
 {
-    expoStickLeftRight-=0.05;
-    limitValue(expoStickLeftRight);
+    switch (selectedMenuEntry)
+    {
+    case PITCH:
+        radioData.expoData.pitch-=radioData.expoData.stepSize;
+        limitValue(radioData.expoData.pitch);
+        break;
+    case ROLL:
+        radioData.expoData.roll-=radioData.expoData.stepSize;
+        limitValue(radioData.expoData.roll);
+        break;
+    case THROTTLE:
+        radioData.expoData.throttle-=radioData.expoData.stepSize;
+        limitValue(radioData.expoData.throttle);
+        break;
+    default:
+        break;
+    }
 }
 void Expo::right()
 {
-    expoStickLeftRight+=0.05;
-    limitValue(expoStickLeftRight);
+    switch (selectedMenuEntry)
+    {
+    case PITCH:
+        radioData.expoData.pitch+=radioData.expoData.stepSize;
+        limitValue(radioData.expoData.pitch);
+        break;
+    case ROLL:
+        radioData.expoData.roll+=radioData.expoData.stepSize;
+        limitValue(radioData.expoData.roll);
+        break;
+    case THROTTLE:
+        radioData.expoData.throttle+=radioData.expoData.stepSize;
+        limitValue(radioData.expoData.throttle);
+        break;
+    default:
+        break;
+    }
 }
 
 void Expo::doFunction()
 {
-    calcExpo(digitalValues.slider, expoSlider);
-    calcExpo(digitalValues.stickLeftRight, expoStickLeftRight);
-    calcExpo(digitalValues.stickUpDown, expoStickUpDown);
+    calcExpo(radioData.functionData.throttle, radioData.expoData.throttle);
+    calcExpo(radioData.functionData.roll, radioData.expoData.roll);
+    calcExpo(radioData.functionData.pitch, radioData.expoData.pitch);
 }
 
-void Expo::calcExpo(double& value, double expo)
+void Expo::calcExpo(double& value, const double expo)
 {
     value = ((1 - expo) * value + expo * pow(value,3));
     limitValue(value);

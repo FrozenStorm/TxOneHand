@@ -6,17 +6,16 @@
 class DualRate : public RadioClass
 {
 private:
-    double rateStickLeftRight = 1;
-    double rateStickUpDown = 1;
-    double rateSlider = 1;
+    enum MenuEntries{PITCH, ROLL, THROTTLE};
+    MenuEntries selectedMenuEntry = PITCH;
     void calcRate(double& value, double rate);
 public:
-    DualRate(TFT_eSPI& newTft, DigitalValues& newDigitalValues) : RadioClass(newTft, newDigitalValues){}
+    DualRate(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
     void doFunction();
 
     void showMenu();
     void showValue();
-    void showTitle();
+    const char * getTitle();
     void up();
     void down();
     void left();
@@ -26,54 +25,108 @@ public:
 
 
 void DualRate::showValue(){};
-void DualRate::showTitle(){};
+const char * DualRate::getTitle()
+{
+    return "DualRate";
+}
 void DualRate::center(){};
 
 void DualRate::showMenu()
 {
-    tft.fillScreen(TFT_BLACK);
-    tft.setCursor(15, 140, 2);
-    tft.setTextColor(TFT_WHITE,TFT_BLACK);  
-    tft.setTextSize(1);
+    char myString[20];
+    int posH = tft.height()/2+20;
+    int posW = 20;
+    int incH = 20;
+    sprintf(myString,"pitch = %.0f%%\n",radioData.dualRateData.pitch*100);
+    tft.drawString(myString, posW, posH);
+    sprintf(myString,"roll = %.0f%%\n",radioData.dualRateData.roll*100);
+    tft.drawString(myString, posW, posH+incH);
+    sprintf(myString,"throttle = %.0f%%\n",radioData.dualRateData.throttle*100);
+    tft.drawString(myString, posW, posH+incH*2);
 
-    tft.println("TxOneHand by Z-Craft");
-    tft.println();
-
-    tft.println("Dual Rate");
-
-    tft.printf("rateStickLeftRight = %.0f%%\n",rateStickLeftRight*100);
-
-    tft.printf("rateStickUpDown = %.0f%%\n",rateStickUpDown*100);
-    
-    tft.printf("rateSlider = %.0f%%\n",rateSlider*100);
+    tft.drawTriangle(0,posH+incH*selectedMenuEntry,0,posH+incH+incH*selectedMenuEntry,posW/1.5,posH+incH/2+incH*selectedMenuEntry,TFT_WHITE);
 }
 
 void DualRate::up()
 {
-    rateStickUpDown+=0.05;
-    limitValue(rateStickUpDown);
+    switch (selectedMenuEntry)
+    {
+    case PITCH:
+        selectedMenuEntry = THROTTLE;
+        break;
+    case ROLL:
+        selectedMenuEntry = PITCH;
+        break;
+    case THROTTLE:
+        selectedMenuEntry = ROLL;
+        break;
+    default:
+        break;
+    }  
 }
 void DualRate::down()
 {
-    rateStickUpDown-=0.05;
-    if(rateStickUpDown < 0 ) rateStickUpDown = 0;
+    switch (selectedMenuEntry)
+    {
+    case PITCH:
+        selectedMenuEntry = ROLL;
+        break;
+    case ROLL:
+        selectedMenuEntry = THROTTLE;
+        break;
+    case THROTTLE:
+        selectedMenuEntry = PITCH;
+        break;
+    default:
+        break;
+    }
 }
 void DualRate::left()
 {
-    rateStickLeftRight-=0.05;
-    if(rateStickLeftRight < 0 ) rateStickLeftRight = 0;
+    switch (selectedMenuEntry)
+    {
+    case PITCH:
+        radioData.dualRateData.pitch-=radioData.dualRateData.stepSize;
+        if(radioData.dualRateData.pitch < 0 ) radioData.dualRateData.pitch = 0;
+        break;
+    case ROLL:
+        radioData.dualRateData.roll-=radioData.dualRateData.stepSize;
+        if(radioData.dualRateData.roll < 0 ) radioData.dualRateData.roll = 0;
+        break;
+    case THROTTLE:
+        radioData.dualRateData.throttle-=radioData.dualRateData.stepSize;
+        if(radioData.dualRateData.throttle < 0 ) radioData.dualRateData.throttle = 0;
+        break;
+    default:
+        break;
+    }
 }
 void DualRate::right()
 {
-    rateStickLeftRight+=0.05;
-    limitValue(rateStickLeftRight);
+        switch (selectedMenuEntry)
+    {
+    case PITCH:
+        radioData.dualRateData.pitch+=radioData.dualRateData.stepSize;
+        limitValue(radioData.dualRateData.roll);
+        break;
+    case ROLL:
+        radioData.dualRateData.roll+=radioData.dualRateData.stepSize;
+        limitValue(radioData.dualRateData.roll);
+        break;
+    case THROTTLE:
+        radioData.dualRateData.throttle+=radioData.dualRateData.stepSize;
+        limitValue(radioData.dualRateData.roll);
+        break;
+    default:
+        break;
+    }  
 }
 
 void DualRate::doFunction()
 {
-    calcRate(digitalValues.slider, rateSlider);
-    calcRate(digitalValues.stickLeftRight, rateStickLeftRight);
-    calcRate(digitalValues.stickUpDown, rateStickUpDown);
+    calcRate(radioData.functionData.throttle, radioData.dualRateData.throttle);
+    calcRate(radioData.functionData.roll, radioData.dualRateData.roll);
+    calcRate(radioData.functionData.pitch, radioData.dualRateData.pitch);
 }
 
 void DualRate::calcRate(double& value, double rate)

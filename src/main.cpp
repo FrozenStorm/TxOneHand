@@ -9,13 +9,13 @@
 #include <Adafruit_L3GD20_U.h>
 #include <Adafruit_10DOF.h>
 #include <GNSS.h>
-#include "AnalogInputs.hpp"
-#include "DigitalValues.hpp"
+#include "AnalogToDigital.hpp"
+#include "DigitalToFunction.hpp"
 #include "Expo.hpp"
 #include "Trim.hpp"
+#include "FunctionToChannel.hpp"
 #include "RadioMenu.hpp"
 #include "DualRate.hpp"
-#include <EEPROM.h>
 
 /* -------------------- Defines --------------------------------------------------------------------------------*/
 #define PIN_MULTI_TX          43
@@ -40,12 +40,14 @@ float                             seaLevelPressure = SENSORS_PRESSURE_SEALEVELHP
 GNSS                              gnss;    
 uint32_t                          targetTime = 0;         
 char                              txData[27] = {0x55,0x06,0x20,0x07,0x00,0x24,0x20,0x07,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x00,0x04,0x20,0x00,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x08};
-DigitalValues                     digitalValues = DigitalValues();
-AnalogInputs                      analogInputs = AnalogInputs(tft, digitalValues);
-Expo                              expo = Expo(tft, digitalValues);
-DualRate                          dualRate = DualRate(tft, digitalValues);
-Trim                              trim = Trim(tft, digitalValues);
-RadioMenu                         menu = RadioMenu(&trim, digitalValues);
+RadioData                         radioData = RadioData();
+AnalogToDigital                   analogToDigital = AnalogToDigital(tft, radioData);
+DigitalToFunction                 digitalToFunction = DigitalToFunction(tft, radioData);
+Expo                              expo = Expo(tft, radioData);
+DualRate                          dualRate = DualRate(tft, radioData);
+Trim                              trim = Trim(tft, radioData);
+FunctionToChannel                 functionToChannel = FunctionToChannel(tft, radioData);
+RadioMenu                         radioMenu = RadioMenu(tft, radioData, &trim);
 /* -------------------- Functions Prototypes -------------------------------------------------------------------*/
 void readSensor(void);
 void sendTxData(void);
@@ -56,11 +58,8 @@ void setup() {
   Serial.begin(115200);
 
   // Menu
-  menu.addEntry(&expo);
-  menu.addEntry(&dualRate);
-
-  // EEPROM
-  EEPROM.begin(1);
+  radioMenu.addEntry(&expo);
+  radioMenu.addEntry(&dualRate);
 
   // Display
   tft.init();
@@ -69,8 +68,6 @@ void setup() {
   tft.setCursor(0, 0, 2);
   tft.setTextColor(TFT_WHITE,TFT_BLACK);  
   tft.setTextSize(1);
-
-  tft.println("TxOneHand by Z-Craft");
 
   // I2C 10DOF Sensor
   Wire.setPins(PIN_ACCELEROMETER_SDA,PIN_ACCELEROMETER_SCL);
@@ -94,9 +91,6 @@ void setup() {
     //while(1);
   }
 
-  // GPIO
-  
-
   // Power Enable (for LCD Backlight without VBUS from USB)
   pinMode(PIN_POWER_EN,OUTPUT);
   digitalWrite(PIN_POWER_EN,HIGH);
@@ -107,6 +101,9 @@ void setup() {
 
   //GPS
   gnss.init(Serial2, 9600);
+
+  //EEPROM
+  radioData.loadData();
   
   // Loop Delay
   targetTime = millis() + 1000; 
@@ -118,10 +115,9 @@ void loop() {
   
   if (targetTime < millis()) {
     targetTime += 100;
-
     
     // analogInputs.showValue();
-    menu.showMenu();
+    radioMenu.showMenu();
     
     // gnss.serialRead();
     // tft.printf("D,T=%s,%s\n",gnss.UTCDate.c_str(),gnss.UTCTime.c_str());
@@ -131,11 +127,13 @@ void loop() {
 
     // readSensor();
   }
-  analogInputs.doFunction();
-  menu.processInputs();
+  analogToDigital.doFunction();
+  radioMenu.processInputs();
+  digitalToFunction.doFunction();
   expo.doFunction();
   trim.doFunction();
   dualRate.doFunction();
+  functionToChannel.doFunction();
   sendTxData();
 
   delay(10);
@@ -187,29 +185,9 @@ void readSensor(void){
 }
 
 void sendTxData(void){
-  int channel[16];
-  double mix0 = (-digitalValues.stickLeftRight - digitalValues.stickUpDown);
-  if(mix0 > 1) mix0 = 1;
-  if(mix0 < -1) mix0 = -1;
-  double mix1 = (-digitalValues.stickLeftRight + digitalValues.stickUpDown);
-  if(mix1 > 1) mix1 = 1;
-  if(mix1 < -1) mix1 = -1;
-  channel[0] = (mix0 + 1) * ((1<<10)-1);
-  channel[1] = (mix1 + 1) * ((1<<10)-1);
-  channel[2] = (digitalValues.slider + 1) * ((1<<10)-1);
-  channel[13] = channel[2];
-  for(int i = 0; i < 16; i++){
-    if(channel[i] > ((1<<11)-1)) channel[i] = ((1<<11)-1);
-    if(channel[i] < 0) channel[i] = 0;
-//    Serial.print("ch");
-//    Serial.print(i);
-//    Serial.print(", value=");
-//    Serial.print(channel[i]);
-//    Serial.println("");
-  }
-  
+ 
   for(int i = 0; i < 16*11; i++){
-    if(channel[i/11] & (0x01 << (i % 11))){
+    if(radioData.channelData.channel[i/11] & (0x01 << (i % 11))){
       txData[4+i/8] |= (0x01 << (i % 8));
     }
     else{

@@ -3,21 +3,22 @@
 
 #include <TFT_eSPI.h>
 #include <Arduino.h>
-#include "DigitalValues.hpp"
+#include <RadioData.hpp>
+#include <string.h>
 
 class RadioClass
 {
 
 protected:
     TFT_eSPI& tft;
-    DigitalValues& digitalValues;
+    RadioData& radioData;
     void limitValue(double& value);
 public:
-    RadioClass(TFT_eSPI& newTft, DigitalValues& newDigitalValues): tft(newTft), digitalValues(newDigitalValues){}
+    RadioClass(TFT_eSPI& newTft, RadioData& newRadioData): tft(newTft), radioData(newRadioData){}
     virtual void doFunction();
     virtual void showMenu();
     virtual void showValue();
-    virtual void showTitle();
+    virtual const char * getTitle();
     virtual void up();
     virtual void down();
     virtual void left();
