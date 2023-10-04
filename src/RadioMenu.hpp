@@ -36,7 +36,6 @@ void RadioMenu::addEntry(RadioClass* menuEntry)
 void RadioMenu::showMenu()
 {
     char myString[10];
-    tft.fillScreen(TFT_BLACK);
 
     tft.setTextDatum(MC_DATUM);
     previousEntry();
@@ -60,14 +59,12 @@ void RadioMenu::showMenu()
     tft.setCursor(0, tft.height()/2, 2);
     tft.println();
 
-
     (*menuPointer)->showMenu();
 }
 
 void RadioMenu::nextEntry()
 {
     menuPointer++;
-    radioData.storeData();
     if(menuPointer == menuPoints.end()) menuPointer = menuPoints.begin();
 }
 
@@ -83,7 +80,13 @@ void RadioMenu::processInputs()
     if(radioData.digitalData.downEvent == true) (*menuPointer)->down();
     if(radioData.digitalData.leftEvent == true) (*menuPointer)->left();
     if(radioData.digitalData.rightEvent == true) (*menuPointer)->right();
-    if(radioData.digitalData.centerLongPressEvent == true) nextEntry();
+    if(radioData.digitalData.centerEvent == true) (*menuPointer)->center();
+    if(radioData.digitalData.centerLongPressEvent == true) 
+    {
+        radioData.storeData();
+        tft.fillScreen(TFT_BLACK);
+        nextEntry();
+    }
 }
 
 

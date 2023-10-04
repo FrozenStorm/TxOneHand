@@ -69,7 +69,8 @@ public:
     };
     TrimData trimData;
 
-    enum Function{ NONE, PITCH, ROLL, VTAIL_LEFT, VTAIL_RIGHT, THROTTLE};
+    enum Function{ NONE, PITCH, ROLL, VTAIL_LEFT, VTAIL_RIGHT, THROTTLE, NUMBER_OF_FUNCTIONS};
+    const char* functionNames[NUMBER_OF_FUNCTIONS] = {"NONE", "PITCH", "ROLL", "VTAIL_LEFT", "VTAIL_RIGHT", "THROTTLE"};
 
     struct FunctionToChannelData
     {
@@ -77,6 +78,7 @@ public:
         Function functionOnChannel[16];
         int upperLimitChannel[16];
         int lowerLimitChannel[16];
+        int stepSize;
     };
     FunctionToChannelData functionToChannelData;
 
@@ -157,7 +159,7 @@ RadioData::RadioData(/* args */)
         .stickLimitSlider = {.min = 0.25, .max = 1.45, .center = 0.85, .invert = true},
         .menuButtonLimit = {.up = 1.67, .down = 0.53, .left = 0.38, .right = 1.38, .center = 0.96},
         .menuButtonTolerance = 0.1,
-        .longPressDurationMs = 1000,
+        .longPressDurationMs = 600,
         .startPressTimeUpMs = 0,
         .startPressTimeDownMs = 0,
         .startPressTimeLeftMs = 0,
@@ -187,7 +189,8 @@ RadioData::RadioData(/* args */)
         .invertChannel = {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false},
         .functionOnChannel = {VTAIL_LEFT, VTAIL_RIGHT, THROTTLE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, THROTTLE, NONE, NONE},
         .upperLimitChannel = {2047,2047,2047,2047,2047,2047,2047,2047,2047,2047,2047,2047,2047,2047,2047,2047},
-        .lowerLimitChannel = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+        .lowerLimitChannel = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        .stepSize = 20
     };
     rawData = {};
     analogData = {};

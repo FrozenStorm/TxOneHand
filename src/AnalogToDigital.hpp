@@ -14,6 +14,8 @@
 class AnalogToDigital : public RadioClass
 {
 private:
+    enum MenuEntries{INV_UP_DOWN, INV_LEFT_RIGHT, INV_SLIDER, LIM_UP_DOWN, LIM_LEFT_RIGHT, LIM_SLIDER, NUMBER_OF_MENUENTRIES};
+    MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
     void getMenuButton(const double& value, const double& limit, const double& tolerance, bool& button, bool& buttonEvent);
     double analogToDigital(double value, const RadioData::AnalogToDigitalData::StickLimit& limit);
     void getLongPress(bool& longPressEvent, unsigned long& startTimeMs, const bool& state, const bool& event);
@@ -31,16 +33,170 @@ public:
     void center();
 };
 
-void AnalogToDigital::showMenu(){};
+void AnalogToDigital::showMenu()
+{
+    char myString[40];
+    int posH = tft.height()/2+40;
+    int posW = 20;
+    int incH = 20;
+
+    sprintf(myString,"INV_UD : %d      %1.2fV\n", radioData.analogToDigitalData.stickLimitUpDown.invert, radioData.analogData.stickUpDown);
+    tft.drawString(myString, posW, posH+incH*0);
+    sprintf(myString,"INV_LR : %d      %1.2fV\n", radioData.analogToDigitalData.stickLimitLeftRight.invert, radioData.analogData.stickLeftRight);
+    tft.drawString(myString, posW, posH+incH*1);
+    sprintf(myString,"INV_SL : %d      %1.2fV\n", radioData.analogToDigitalData.stickLimitSlider.invert, radioData.analogData.slider);
+    tft.drawString(myString, posW, posH+incH*2);
+
+    sprintf(myString,"UD: %1.2fV:%1.2fV:%1.2fV\n", radioData.analogToDigitalData.stickLimitUpDown.min, radioData.analogToDigitalData.stickLimitUpDown.center, radioData.analogToDigitalData.stickLimitUpDown.max);
+    tft.drawString(myString, posW, posH+incH*3);
+    sprintf(myString,"LR: %1.2fV:%1.2fV:%1.2fV\n", radioData.analogToDigitalData.stickLimitLeftRight.min, radioData.analogToDigitalData.stickLimitLeftRight.center, radioData.analogToDigitalData.stickLimitLeftRight.max);
+    tft.drawString(myString, posW, posH+incH*4);
+    sprintf(myString,"SL: %1.2fV:%1.2fV:%1.2fV\n", radioData.analogToDigitalData.stickLimitSlider.min, radioData.analogToDigitalData.stickLimitSlider.center, radioData.analogToDigitalData.stickLimitSlider.max);
+    tft.drawString(myString, posW, posH+incH*5);
+
+    for(int i=0; i<NUMBER_OF_MENUENTRIES; i++)
+    {
+        tft.drawTriangle(0,posH+incH*i,0,posH+incH+incH*i,posW/1.5,posH+incH/2+incH*i,TFT_BLACK);
+    }
+    if(selectedMenuEntry != NUMBER_OF_MENUENTRIES) tft.drawTriangle(0,posH+incH*selectedMenuEntry,0,posH+incH+incH*selectedMenuEntry,posW/1.5,posH+incH/2+incH*selectedMenuEntry,TFT_WHITE);
+}
 const char * AnalogToDigital::getTitle()
 {
-    return "AnalogToDigital";
+    return "A-To-D";
 }
-void AnalogToDigital::up(){};
-void AnalogToDigital::down(){};
-void AnalogToDigital::left(){};
-void AnalogToDigital::right(){};
-void AnalogToDigital::center(){};
+void AnalogToDigital::up()
+{
+    switch (selectedMenuEntry)
+    {
+    case INV_UP_DOWN:
+        selectedMenuEntry = NUMBER_OF_MENUENTRIES;
+        break;
+    case INV_LEFT_RIGHT:
+        selectedMenuEntry = INV_UP_DOWN;
+        break;
+    case INV_SLIDER:
+        selectedMenuEntry = INV_LEFT_RIGHT;
+        break;
+    case LIM_UP_DOWN:
+        selectedMenuEntry = INV_SLIDER;
+        break;
+    case LIM_LEFT_RIGHT:
+        selectedMenuEntry = LIM_UP_DOWN;
+        break;
+    case LIM_SLIDER:
+        selectedMenuEntry = LIM_LEFT_RIGHT;
+        break;
+    case NUMBER_OF_MENUENTRIES:
+        selectedMenuEntry = LIM_SLIDER;
+        break;
+    default:
+        break;
+    }  
+}
+void AnalogToDigital::down()
+{
+    switch (selectedMenuEntry)
+    {
+    case INV_UP_DOWN:
+        selectedMenuEntry = INV_LEFT_RIGHT;
+        break;
+    case INV_LEFT_RIGHT:
+        selectedMenuEntry = INV_SLIDER;
+        break;
+    case INV_SLIDER:
+        selectedMenuEntry = LIM_UP_DOWN;
+        break;
+    case LIM_UP_DOWN:
+        selectedMenuEntry = LIM_LEFT_RIGHT;
+        break;
+    case LIM_LEFT_RIGHT:
+        selectedMenuEntry = LIM_SLIDER;
+        break;
+    case LIM_SLIDER:
+        selectedMenuEntry = NUMBER_OF_MENUENTRIES;
+        break;
+    case NUMBER_OF_MENUENTRIES:
+        selectedMenuEntry = INV_UP_DOWN;
+        break;
+    default:
+        break;
+    }
+}
+void AnalogToDigital::left()
+{
+    switch (selectedMenuEntry)
+    {
+    case INV_UP_DOWN:
+        radioData.analogToDigitalData.stickLimitUpDown.invert = !radioData.analogToDigitalData.stickLimitUpDown.invert;
+        break;
+    case INV_LEFT_RIGHT:
+        radioData.analogToDigitalData.stickLimitLeftRight.invert = !radioData.analogToDigitalData.stickLimitLeftRight.invert;
+        break;
+    case INV_SLIDER:
+        radioData.analogToDigitalData.stickLimitSlider.invert = !radioData.analogToDigitalData.stickLimitSlider.invert;
+        break;
+    case LIM_UP_DOWN:
+        radioData.analogToDigitalData.stickLimitUpDown.min = radioData.analogData.stickUpDown;
+        break;
+    case LIM_LEFT_RIGHT:
+        radioData.analogToDigitalData.stickLimitLeftRight.min = radioData.analogData.stickLeftRight;
+        break;
+    case LIM_SLIDER:
+        radioData.analogToDigitalData.stickLimitSlider.min = radioData.analogData.slider;
+        break;
+    default:
+        break;
+    }
+}
+void AnalogToDigital::right()
+{
+    switch (selectedMenuEntry)
+    {
+    case LIM_LEFT_RIGHT:
+        radioData.analogToDigitalData.stickLimitLeftRight.max = radioData.analogData.stickLeftRight;
+        break;
+    case LIM_UP_DOWN:
+        radioData.analogToDigitalData.stickLimitUpDown.max = radioData.analogData.stickUpDown;
+        break;
+    case LIM_SLIDER:
+        radioData.analogToDigitalData.stickLimitSlider.max = radioData.analogData.slider;
+        break;
+    case INV_LEFT_RIGHT:
+        radioData.analogToDigitalData.stickLimitLeftRight.invert = !radioData.analogToDigitalData.stickLimitLeftRight.invert;
+        break;
+    case INV_UP_DOWN:
+        radioData.analogToDigitalData.stickLimitUpDown.invert = !radioData.analogToDigitalData.stickLimitUpDown.invert;
+        break;
+    case INV_SLIDER:
+        radioData.analogToDigitalData.stickLimitSlider.invert = !radioData.analogToDigitalData.stickLimitSlider.invert;
+        break;
+    default:
+        break;
+    }    
+}
+void AnalogToDigital::center()
+{
+    switch (selectedMenuEntry)
+    {
+    case LIM_LEFT_RIGHT:
+        radioData.analogToDigitalData.stickLimitLeftRight.center = radioData.analogData.stickLeftRight;
+        break;
+    case LIM_UP_DOWN:
+        radioData.analogToDigitalData.stickLimitUpDown.center = radioData.analogData.stickUpDown;
+        break;
+    case LIM_SLIDER:
+        radioData.analogToDigitalData.stickLimitSlider.center = radioData.analogData.slider;
+        break;
+    case INV_LEFT_RIGHT:
+        break;
+    case INV_UP_DOWN:
+        break;
+    case INV_SLIDER:
+        break;
+    default:
+        break;
+    }
+}
 
 AnalogToDigital::AnalogToDigital(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData)
 {

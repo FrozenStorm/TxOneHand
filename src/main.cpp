@@ -58,8 +58,11 @@ void setup() {
   Serial.begin(115200);
 
   // Menu
+  radioMenu.addEntry(&analogToDigital);
   radioMenu.addEntry(&expo);
   radioMenu.addEntry(&dualRate);
+  radioMenu.addEntry(&functionToChannel);
+  
 
   // Display
   tft.init();
@@ -116,7 +119,6 @@ void loop() {
   if (targetTime < millis()) {
     targetTime += 100;
     
-    // analogInputs.showValue();
     radioMenu.showMenu();
     
     // gnss.serialRead();
