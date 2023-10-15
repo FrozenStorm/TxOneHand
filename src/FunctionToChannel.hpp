@@ -15,8 +15,8 @@ public:
     void showMenu() override;
     void up() override;
     void down() override;
-    void left() override;
-    void right() override;
+    bool left() override;
+    bool right() override;
     void center() override;
 
     void showValue();
@@ -31,10 +31,6 @@ const char * FunctionToChannel::getTitle()
 
 void FunctionToChannel::showMenu()
 {
-    char myString[40];
-    int posH = tft.height()/2+20;
-    int posW = 20;
-    int incH = 20;
     sprintf(myString,"Channel = %d    \n",selectedMenuChannel+1);
     tft.drawString(myString, posW, posH+incH*0);
     sprintf(myString,"Func. = %s          \n",radioData.functionNames[radioData.functionToChannelData.functionOnChannel[selectedMenuChannel]]);
@@ -46,11 +42,7 @@ void FunctionToChannel::showMenu()
     sprintf(myString,"Max = %d    \n",radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel]);
     tft.drawString(myString, posW, posH+incH*4);
 
-    for(int i=0; i<NUMBER_OF_MENUENTRIES; i++)
-    {
-        tft.drawTriangle(0,posH+incH*i,0,posH+incH+incH*i,posW/1.5,posH+incH/2+incH*i,TFT_BLACK);
-    }
-    if(selectedMenuEntry != NUMBER_OF_MENUENTRIES) tft.drawTriangle(0,posH+incH*selectedMenuEntry,0,posH+incH+incH*selectedMenuEntry,posW/1.5,posH+incH/2+incH*selectedMenuEntry,TFT_WHITE);
+    drawMenuPointer(selectedMenuEntry,NUMBER_OF_MENUENTRIES);
 }
 
 void FunctionToChannel::doFunction()
@@ -96,61 +88,18 @@ void FunctionToChannel::doFunction()
 }
 
 
-void FunctionToChannel::up() 
+void FunctionToChannel::up()
 {
-    switch (selectedMenuEntry)
-    {
-    case CHANNEL:
-        selectedMenuEntry = NUMBER_OF_MENUENTRIES;
-        break;
-    case FUNCTION:
-        selectedMenuEntry = CHANNEL;
-        break;
-    case INVERT:
-        selectedMenuEntry = FUNCTION;
-        break;
-    case LOWER:
-        selectedMenuEntry = INVERT;
-        break;
-    case UPPER:
-        selectedMenuEntry = LOWER;
-        break;
-    case NUMBER_OF_MENUENTRIES:
-        selectedMenuEntry = LOWER;
-        break;
-    default:
-        break;
-    }  
+    if(selectedMenuEntry > 0) selectedMenuEntry=(MenuEntries)(selectedMenuEntry-1);
+    else selectedMenuEntry = NUMBER_OF_MENUENTRIES;
 }
-
 void FunctionToChannel::down()
 {
-    switch (selectedMenuEntry)
-    {
-    case CHANNEL:
-        selectedMenuEntry = FUNCTION;
-        break;
-    case FUNCTION:
-        selectedMenuEntry = INVERT;
-        break;
-    case INVERT:
-        selectedMenuEntry = LOWER;
-        break;
-    case LOWER:
-        selectedMenuEntry = UPPER;
-        break;
-    case UPPER:
-        selectedMenuEntry = NUMBER_OF_MENUENTRIES;
-        break;
-    case NUMBER_OF_MENUENTRIES:
-        selectedMenuEntry = CHANNEL;
-        break;
-    default:
-        break;
-    } 
+    if(selectedMenuEntry < NUMBER_OF_MENUENTRIES) selectedMenuEntry=(MenuEntries)(selectedMenuEntry+1);
+    else selectedMenuEntry = (MenuEntries)0;
 }
 
-void FunctionToChannel::left()
+bool FunctionToChannel::left()
 {
     int nextValue;
     switch (selectedMenuEntry)
@@ -177,12 +126,16 @@ void FunctionToChannel::left()
         if(radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel] < 0) radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel] = 0;
         if(radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel] <= radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel]) radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel]+=radioData.functionToChannelData.stepSize;
         break;
+    case NUMBER_OF_MENUENTRIES:
+        return true;
+        break;
     default:
         break;
-    } 
+    }
+    return false;
 }
 
-void FunctionToChannel::right()
+bool FunctionToChannel::right()
 {
     int nextValue;
     switch (selectedMenuEntry)
@@ -209,9 +162,13 @@ void FunctionToChannel::right()
         radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel]+=radioData.functionToChannelData.stepSize;
         if(radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel] > 2047) radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel] = 2047;
         break;
+    case NUMBER_OF_MENUENTRIES:
+        return true;
+        break;
     default:
         break;
-    } 
+    }
+    return false;
 }
 
 void FunctionToChannel::center()

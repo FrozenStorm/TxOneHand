@@ -13,8 +13,8 @@ public:
     void showMenu() override;
     void up() override;
     void down() override;
-    void left() override;
-    void right() override;
+    bool left() override;
+    bool right() override;
     void center() override;
 
     void showValue();
@@ -45,12 +45,12 @@ void DigitalToFunction::down()
 
 }
 
-void DigitalToFunction::left()
+bool DigitalToFunction::left()
 {
 
 }
 
-void DigitalToFunction::right()
+bool DigitalToFunction::right()
 {
 
 }

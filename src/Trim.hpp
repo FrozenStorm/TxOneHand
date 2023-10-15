@@ -18,8 +18,8 @@ public:
     void showMenu() override;
     void up() override;
     void down() override;
-    void left() override;
-    void right() override;
+    bool left() override;
+    bool right() override;
     void center() override;
 
     void showValue();
@@ -55,14 +55,16 @@ void Trim::down()
     changeTrim(radioData.trimData.pitch, false);
 }
 
-void Trim::left()
+bool Trim::left()
 {
     changeTrim(radioData.trimData.roll, false);
+    return false;
 }
 
-void Trim::right()
+bool Trim::right()
 {
     changeTrim(radioData.trimData.roll, true);
+    return false;
 }
 
 void Trim::center()
@@ -80,6 +82,7 @@ void Trim::changeTrim(int& trim, const bool moreNotLess)
     {
         trim--;
     }
+    radioData.storeData();
 }
 
 void Trim::showMenu()

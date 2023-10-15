@@ -69,6 +69,13 @@ public:
     };
     TrimData trimData;
 
+    struct MixerData
+    {
+        double throttleToPitch;
+        double stepSize;
+    };
+    MixerData mixerData;
+
     enum Function{ NONE, PITCH, ROLL, VTAIL_LEFT, VTAIL_RIGHT, THROTTLE, NUMBER_OF_FUNCTIONS};
     const char* functionNames[NUMBER_OF_FUNCTIONS] = {"NONE", "PITCH", "ROLL", "VTAIL_LEFT", "VTAIL_RIGHT", "THROTTLE"};
 
@@ -185,6 +192,10 @@ RadioData::RadioData(/* args */)
         .stepSize = 0.01,
         .stepCountLimit = 20
     };
+    mixerData = {
+        .throttleToPitch = 0,
+        .stepSize = 0.05
+    };
     functionToChannelData = {
         .invertChannel = {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false},
         .functionOnChannel = {VTAIL_LEFT, VTAIL_RIGHT, THROTTLE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, THROTTLE, NONE, NONE},
@@ -204,6 +215,7 @@ RadioData::RadioData(/* args */)
     eepromSize += sizeof(DualRateData);
     eepromSize += sizeof(TrimData);
     eepromSize += sizeof(FunctionToChannelData);
+    eepromSize += sizeof(MixerData);
     // eepromSize += sizeof(RawData);
     // eepromSize += sizeof(AnalogData);
     // eepromSize += sizeof(DigitalData);
@@ -235,6 +247,9 @@ void RadioData::storeData()
 
     EEPROM.put(address,functionToChannelData);
     address += sizeof(FunctionToChannelData);
+
+    EEPROM.put(address,mixerData);
+    address += sizeof(MixerData);
 
     //EEPROM.put<RawData>(address,rawData);
     //address += sizeof(RawData);
@@ -272,7 +287,10 @@ void RadioData::loadData()
     address += sizeof(TrimData);
 
     EEPROM.get(address, functionToChannelData);
-    address += sizeof(FunctionToChannelData);   
+    address += sizeof(FunctionToChannelData);  
+
+    EEPROM.get(address, mixerData);
+    address += sizeof(MixerData);   
 
     //EEPROM.get<RawData>(address, rawData);
     //address += sizeof(RawData);

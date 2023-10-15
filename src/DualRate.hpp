@@ -18,8 +18,8 @@ public:
     const char * getTitle();
     void up();
     void down();
-    void left();
-    void right();
+    bool left();
+    bool right();
     void center();
 };
 
@@ -33,10 +33,6 @@ void DualRate::center(){};
 
 void DualRate::showMenu()
 {
-    char myString[40];
-    int posH = tft.height()/2+20;
-    int posW = 20;
-    int incH = 20;
     sprintf(myString,"Pitch = %.0f%%    \n",radioData.dualRateData.pitch*100);
     tft.drawString(myString, posW, posH+incH*0);
     sprintf(myString,"Roll = %.0f%%    \n",radioData.dualRateData.roll*100);
@@ -44,54 +40,20 @@ void DualRate::showMenu()
     sprintf(myString,"Throttle = %.0f%%    \n",radioData.dualRateData.throttle*100);
     tft.drawString(myString, posW, posH+incH*2);
 
-    for(int i=0; i<NUMBER_OF_MENUENTRIES; i++)
-    {
-        tft.drawTriangle(0,posH+incH*i,0,posH+incH+incH*i,posW/1.5,posH+incH/2+incH*i,TFT_BLACK);
-    }
-    if(selectedMenuEntry != NUMBER_OF_MENUENTRIES) tft.drawTriangle(0,posH+incH*selectedMenuEntry,0,posH+incH+incH*selectedMenuEntry,posW/1.5,posH+incH/2+incH*selectedMenuEntry,TFT_WHITE);
+    drawMenuPointer(selectedMenuEntry,NUMBER_OF_MENUENTRIES);
 }
 
 void DualRate::up()
 {
-    switch (selectedMenuEntry)
-    {
-    case PITCH:
-        selectedMenuEntry = NUMBER_OF_MENUENTRIES;
-        break;
-    case ROLL:
-        selectedMenuEntry = PITCH;
-        break;
-    case THROTTLE:
-        selectedMenuEntry = ROLL;
-        break;
-    case NUMBER_OF_MENUENTRIES:
-        selectedMenuEntry = THROTTLE;
-        break;
-    default:
-        break;
-    }  
+    if(selectedMenuEntry > 0) selectedMenuEntry=(MenuEntries)(selectedMenuEntry-1);
+    else selectedMenuEntry = NUMBER_OF_MENUENTRIES;
 }
 void DualRate::down()
 {
-    switch (selectedMenuEntry)
-    {
-    case PITCH:
-        selectedMenuEntry = ROLL;
-        break;
-    case ROLL:
-        selectedMenuEntry = THROTTLE;
-        break;
-    case THROTTLE:
-        selectedMenuEntry = NUMBER_OF_MENUENTRIES;
-        break;
-    case NUMBER_OF_MENUENTRIES:
-        selectedMenuEntry = PITCH;
-        break;
-    default:
-        break;
-    }
+    if(selectedMenuEntry < NUMBER_OF_MENUENTRIES) selectedMenuEntry=(MenuEntries)(selectedMenuEntry+1);
+    else selectedMenuEntry = (MenuEntries)0;
 }
-void DualRate::left()
+bool DualRate::left()
 {
     switch (selectedMenuEntry)
     {
@@ -107,11 +69,15 @@ void DualRate::left()
         radioData.dualRateData.throttle-=radioData.dualRateData.stepSize;
         if(radioData.dualRateData.throttle < 0 ) radioData.dualRateData.throttle = 0;
         break;
+    case NUMBER_OF_MENUENTRIES:
+        return true;
+        break;
     default:
         break;
     }
+    return false;
 }
-void DualRate::right()
+bool DualRate::right()
 {
         switch (selectedMenuEntry)
     {
@@ -127,9 +93,13 @@ void DualRate::right()
         radioData.dualRateData.throttle+=radioData.dualRateData.stepSize;
         limitValue(radioData.dualRateData.roll);
         break;
+    case NUMBER_OF_MENUENTRIES:
+        return true;
+        break;
     default:
         break;
-    }  
+    }
+    return false;
 }
 
 void DualRate::doFunction()

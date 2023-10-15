@@ -13,6 +13,7 @@
 #include "DigitalToFunction.hpp"
 #include "Expo.hpp"
 #include "Trim.hpp"
+#include "Mixer.hpp"
 #include "FunctionToChannel.hpp"
 #include "RadioMenu.hpp"
 #include "DualRate.hpp"
@@ -46,6 +47,7 @@ DigitalToFunction                 digitalToFunction = DigitalToFunction(tft, rad
 Expo                              expo = Expo(tft, radioData);
 DualRate                          dualRate = DualRate(tft, radioData);
 Trim                              trim = Trim(tft, radioData);
+Mixer                             mixer = Mixer(tft, radioData);
 FunctionToChannel                 functionToChannel = FunctionToChannel(tft, radioData);
 RadioMenu                         radioMenu = RadioMenu(tft, radioData, &trim);
 /* -------------------- Functions Prototypes -------------------------------------------------------------------*/
@@ -61,6 +63,7 @@ void setup() {
   radioMenu.addEntry(&analogToDigital);
   radioMenu.addEntry(&expo);
   radioMenu.addEntry(&dualRate);
+  radioMenu.addEntry(&mixer);
   radioMenu.addEntry(&functionToChannel);
   
 
@@ -135,6 +138,7 @@ void loop() {
   expo.doFunction();
   trim.doFunction();
   dualRate.doFunction();
+  mixer.doFunction();
   functionToChannel.doFunction();
   sendTxData();
 

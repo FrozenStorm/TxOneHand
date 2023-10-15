@@ -50,7 +50,7 @@ void RadioMenu::showMenu()
     previousEntry();
 
     tft.setTextSize(1);
-    tft.drawString("TxOneHand by Z-Craft",tft.width()/2, tft.height()/2,2);
+    tft.drawString("TxOneHand by Z-Craft",tft.width()/2, tft.height()/2-20,2);
 
     tft.setTextDatum(TL_DATUM);
     sprintf(myString,"%1.1fV",radioData.analogData.battery);
@@ -78,14 +78,31 @@ void RadioMenu::processInputs()
 {
     if(radioData.digitalData.upEvent == true) (*menuPointer)->up();
     if(radioData.digitalData.downEvent == true) (*menuPointer)->down();
-    if(radioData.digitalData.leftEvent == true) (*menuPointer)->left();
-    if(radioData.digitalData.rightEvent == true) (*menuPointer)->right();
+    if(radioData.digitalData.leftEvent == true)
+    {
+        if((*menuPointer)->left() == true)
+        {
+            radioData.storeData();
+            tft.fillScreen(TFT_BLACK);
+            previousEntry();            
+        }
+    }
+    if(radioData.digitalData.rightEvent == true)
+    {
+        if((*menuPointer)->right() == true)
+        {
+            radioData.storeData();
+            tft.fillScreen(TFT_BLACK);
+            nextEntry();                
+        }
+    }
     if(radioData.digitalData.centerEvent == true) (*menuPointer)->center();
     if(radioData.digitalData.centerLongPressEvent == true) 
     {
         radioData.storeData();
         tft.fillScreen(TFT_BLACK);
-        nextEntry();
+        if(menuPointer == menuPoints.begin()) nextEntry();
+        else menuPointer = menuPoints.begin();
     }
 }
 
