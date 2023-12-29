@@ -15,6 +15,7 @@
 #include "Trim.hpp"
 #include "Mixer.hpp"
 #include "FunctionToChannel.hpp"
+#include "Transmitter.hpp"
 #include "RadioMenu.hpp"
 #include "DualRate.hpp"
 
@@ -40,7 +41,6 @@ Adafruit_BMP085_Unified           bmp   = Adafruit_BMP085_Unified(18001);
 float                             seaLevelPressure = SENSORS_PRESSURE_SEALEVELHPA;
 GNSS                              gnss;    
 uint32_t                          targetTime = 0;         
-char                              txData[27] = {0x55,0x06,0x20,0x07,0x00,0x24,0x20,0x07,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x00,0x04,0x20,0x00,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x08};
 RadioData                         radioData = RadioData();
 AnalogToDigital                   analogToDigital = AnalogToDigital(tft, radioData);
 DigitalToFunction                 digitalToFunction = DigitalToFunction(tft, radioData);
@@ -49,10 +49,10 @@ DualRate                          dualRate = DualRate(tft, radioData);
 Trim                              trim = Trim(tft, radioData);
 Mixer                             mixer = Mixer(tft, radioData);
 FunctionToChannel                 functionToChannel = FunctionToChannel(tft, radioData);
+Transmitter                       transmitter = Transmitter(tft, radioData);
 RadioMenu                         radioMenu = RadioMenu(tft, radioData, &trim);
 /* -------------------- Functions Prototypes -------------------------------------------------------------------*/
 void readSensor(void);
-void sendTxData(void);
 
 /* -------------------- Setup ----------------------------------------------------------------------------------*/
 void setup() {
@@ -65,6 +65,7 @@ void setup() {
   radioMenu.addEntry(&dualRate);
   radioMenu.addEntry(&mixer);
   radioMenu.addEntry(&functionToChannel);
+  radioMenu.addEntry(&transmitter);
   
 
   // Display
@@ -102,11 +103,13 @@ void setup() {
   digitalWrite(PIN_POWER_EN,HIGH);
 
   // UART
-  Serial1.begin(100000, SERIAL_8E2, PIN_MULTI_RX, PIN_MULTI_TX);
-  Serial2.begin(9600, PIN_GPS_RX, PIN_GPS_TX);
+  Serial1.begin(100000, SERIAL_8E2, -1, PIN_MULTI_TX);
+  Serial2.begin(100000, SERIAL_8E2, PIN_MULTI_RX, -1, true);
+  Serial2.setTimeout(4);
+  // Serial2.begin(9600, PIN_GPS_RX, PIN_GPS_TX);
 
   //GPS
-  gnss.init(Serial2, 9600);
+  // gnss.init(Serial2, 9600);
 
   //EEPROM
   radioData.loadData();
@@ -121,7 +124,6 @@ void loop() {
   
   if (targetTime < millis()) {
     targetTime += 100;
-    
     radioMenu.showMenu();
     
     // gnss.serialRead();
@@ -140,7 +142,7 @@ void loop() {
   dualRate.doFunction();
   mixer.doFunction();
   functionToChannel.doFunction();
-  sendTxData();
+  transmitter.doFunction();
 
   delay(10);
 }
@@ -188,17 +190,4 @@ void readSensor(void){
     tft.print(F("Temp="));
     tft.println(temperature);
   }
-}
-
-void sendTxData(void){
- 
-  for(int i = 0; i < 16*11; i++){
-    if(radioData.channelData.channel[i/11] & (0x01 << (i % 11))){
-      txData[4+i/8] |= (0x01 << (i % 8));
-    }
-    else{
-      txData[4+i/8] &= ~(0x01 << (i % 8));
-    }
-  }
-  Serial1.write(txData,27);
 }

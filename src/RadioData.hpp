@@ -151,6 +151,18 @@ public:
     };
     ChannelData channelData;
 
+    enum BindingState{ BINDED, BINDING_STARTED, BINDING, BINDING_FINISHED, BINDING_FAILED, NUMBER_OF_BINDING_STATES};
+    const char* bindingStateNames[NUMBER_OF_BINDING_STATES] = {"Binded", "Binding started", "Binding", "Binding finished", "Binding failed"};
+
+    struct TransmitterData
+    {
+        BindingState bindingState;
+        unsigned char txData[27]; // TODO wiso muss hier unsigend char stehen, damit das init mit 0xE3 funktioniert
+        unsigned char rxData[28];
+    };
+    TransmitterData transmitterData;
+
+
     void storeData();
     void loadData();
     
@@ -208,6 +220,11 @@ RadioData::RadioData(/* args */)
     digitalData = {};
     functionData = {};
     channelData = {};
+    transmitterData = {
+        .bindingState = BINDED,
+        .txData = {0x55,0x06,0x20,0x07,0x00,0x24,0x20,0x07,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x00,0x04,0x20,0x00,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x08},
+        .rxData = {0x4D,0x50,0x01,0x18,0x47,0x01,0x03,0x03,0x14,0xE4,0x46,0x21,0x44,0x53,0x4D,0x00,0x4F,0x4D,0x50,0x76,0x58,0x20,0x31,0x46,0x00,0x00,0x00,0x00}
+    };
 
     
     eepromSize += sizeof(AnalogToDigitalData);
@@ -250,6 +267,8 @@ void RadioData::storeData()
 
     EEPROM.put(address,mixerData);
     address += sizeof(MixerData);
+
+    // TODO SAVE BINDING STATE
 
     //EEPROM.put<RawData>(address,rawData);
     //address += sizeof(RawData);

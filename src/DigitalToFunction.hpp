@@ -47,12 +47,12 @@ void DigitalToFunction::down()
 
 bool DigitalToFunction::left()
 {
-
+    return true;
 }
 
 bool DigitalToFunction::right()
 {
-
+    return true;
 }
 
 void DigitalToFunction::center()
