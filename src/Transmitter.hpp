@@ -6,7 +6,7 @@
 class Transmitter : public RadioClass
 {
 private:
-    enum MenuEntries{BIND, NUMBER_OF_MENUENTRIES};
+    enum MenuEntries{BIND, PROTOCOL, SUBPROTOCOL, NUMBER_OF_MENUENTRIES};
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
 public:
     Transmitter(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
@@ -34,6 +34,12 @@ void Transmitter::showMenu()
     sprintf(myString,"State = %-16s\n",radioData.bindingStateNames[radioData.transmitterData.bindingState]);
     tft.drawString(myString, posW, posH+incH*0);
 
+    sprintf(myString,"Prot. = %-16s\n",radioData.protocolList[radioData.transmitterData.selectedProtocol].name);
+    tft.drawString(myString, posW, posH+incH*1);
+
+    sprintf(myString,"Sub P. = %-16s\n",radioData.protocolList[radioData.transmitterData.selectedProtocol].subProtocolList[radioData.transmitterData.selectedSubProtocol].name);
+    tft.drawString(myString, posW, posH+incH*2);
+
     drawMenuPointer(selectedMenuEntry,NUMBER_OF_MENUENTRIES);
 }
 
@@ -53,6 +59,15 @@ bool Transmitter::left()
     {
     case BIND:
         break;
+    case PROTOCOL:
+        radioData.transmitterData.selectedSubProtocol = 0;
+        if(radioData.transmitterData.selectedProtocol > 0) radioData.transmitterData.selectedProtocol--;
+        else radioData.transmitterData.selectedProtocol = radioData.protocolList.size()-1;
+        break;
+    case SUBPROTOCOL:
+        if(radioData.transmitterData.selectedSubProtocol > 0) radioData.transmitterData.selectedSubProtocol--;
+        else radioData.transmitterData.selectedSubProtocol = radioData.protocolList[radioData.transmitterData.selectedProtocol].subProtocolList.size()-1;
+        break;
     case NUMBER_OF_MENUENTRIES:
         return true;
         break;
@@ -66,6 +81,15 @@ bool Transmitter::right()
     switch (selectedMenuEntry)
     {
     case BIND:
+        break;
+    case PROTOCOL:
+        radioData.transmitterData.selectedSubProtocol = 0;
+        if(radioData.transmitterData.selectedProtocol < radioData.protocolList.size()-1) radioData.transmitterData.selectedProtocol++;
+        else radioData.transmitterData.selectedProtocol = 0;
+        break;
+    case SUBPROTOCOL:
+        if(radioData.transmitterData.selectedSubProtocol < radioData.protocolList[radioData.transmitterData.selectedProtocol].subProtocolList.size()-1) radioData.transmitterData.selectedSubProtocol++;
+        else radioData.transmitterData.selectedSubProtocol = 0;
         break;
     case NUMBER_OF_MENUENTRIES:
         return true;
@@ -84,6 +108,10 @@ void Transmitter::center()
         if(radioData.transmitterData.bindingState == radioData.BINDED || radioData.transmitterData.bindingState == radioData.BINDING_FAILED){
             radioData.transmitterData.bindingState = radioData.BINDING_STARTED;
         }
+        break;
+    case PROTOCOL:
+        break;
+    case SUBPROTOCOL:
         break;
     case NUMBER_OF_MENUENTRIES:
         break;
@@ -108,9 +136,16 @@ void Transmitter::doFunction()
         }
     }
 
-    if(radioData.transmitterData.bindingState == radioData.BINDED || radioData.transmitterData.bindingState == radioData.BINDING_FAILED){
-        
-    }
+    // Set Protocol
+    radioData.transmitterData.txData[1] &= 0xE0;
+    radioData.transmitterData.txData[1] |= radioData.protocolList[radioData.transmitterData.selectedProtocol].value & 0x1F;
+
+    // Set Sub Protocol
+    radioData.transmitterData.txData[2] &= 0x8F;
+    radioData.transmitterData.txData[2] |= (radioData.protocolList[radioData.transmitterData.selectedProtocol].subProtocolList[radioData.transmitterData.selectedSubProtocol].value << 4) & 0x70;    
+
+    // Read binding progress
+    if(radioData.transmitterData.bindingState == radioData.BINDED || radioData.transmitterData.bindingState == radioData.BINDING_FAILED){}
     else{
         if(Serial2.find(search,3))
         {
@@ -122,30 +157,31 @@ void Transmitter::doFunction()
         }
     }
 
+    // Set binding bit
     switch (radioData.transmitterData.bindingState)
     {
-    case radioData.BINDED:
-    case radioData.BINDING_FAILED:
-        bindTimeout = millis() + 15000;
-        rxBindFlag = false;
-        Serial2.flush();
-        break;
-    case radioData.BINDING_STARTED:
-        radioData.transmitterData.txData[1] |= 0x80;
-        if(rxBindFlag == true) radioData.transmitterData.bindingState = radioData.BINDING;
-        if(bindTimeout < millis()) radioData.transmitterData.bindingState = radioData.BINDING_FAILED;
-        break;
-    case radioData.BINDING:
-        radioData.transmitterData.txData[1] |= 0x80;
-        if(rxBindFlag == false) radioData.transmitterData.bindingState = radioData.BINDING_FINISHED;
-        if(bindTimeout < millis()) radioData.transmitterData.bindingState = radioData.BINDING_FAILED;
-        break;
-    case radioData.BINDING_FINISHED:
-        radioData.transmitterData.txData[1] &= ~0x80;
-        if(bindTimeout < millis()) radioData.transmitterData.bindingState = radioData.BINDED;
-        break;  
-    default:
-        break;
+        case radioData.BINDED:
+        case radioData.BINDING_FAILED:
+            bindTimeout = millis() + 15000;
+            rxBindFlag = false;
+            Serial2.flush();
+            break;
+        case radioData.BINDING_STARTED:
+            radioData.transmitterData.txData[1] |= 0x80;
+            if(rxBindFlag == true) radioData.transmitterData.bindingState = radioData.BINDING;
+            if(bindTimeout < millis()) radioData.transmitterData.bindingState = radioData.BINDING_FAILED;
+            break;
+        case radioData.BINDING:
+            radioData.transmitterData.txData[1] |= 0x80;
+            if(rxBindFlag == false) radioData.transmitterData.bindingState = radioData.BINDING_FINISHED;
+            if(bindTimeout < millis()) radioData.transmitterData.bindingState = radioData.BINDING_FAILED;
+            break;
+        case radioData.BINDING_FINISHED:
+            radioData.transmitterData.txData[1] &= ~0x80;
+            if(bindTimeout < millis()) radioData.transmitterData.bindingState = radioData.BINDED;
+            break;  
+        default:
+            break;
     }
 
     Serial1.write(radioData.transmitterData.txData,27);
