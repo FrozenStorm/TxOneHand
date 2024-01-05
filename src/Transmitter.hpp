@@ -9,14 +9,16 @@ private:
     enum MenuEntries{BIND, PROTOCOL, SUBPROTOCOL, RX_NUMBER, POWER_LEVEL, RANGE_CHECK, NUMBER_OF_MENUENTRIES};
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
 
+
+    unsigned char rxData[28] = {0x4D,0x50,0x01,0x18,0x47,0x01,0x03,0x03,0x14,0xE4,0x46,0x21,0x44,0x53,0x4D,0x00,0x4F,0x4D,0x50,0x76,0x58,0x20,0x31,0x46,0x00,0x00,0x00,0x00};
+public:
     uint32_t bindTimeout = 0;
     bool rxBindFlag = false;
     unsigned char txData[27] = {0x55,0x06,0x20,0x07,0x00,0x24,0x20,0x07,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x00,0x04,0x20,0x00,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x08}; // TODO wiso muss hier unsigend char stehen, damit das init mit 0xE3 funktioniert
-    unsigned char rxData[28] = {0x4D,0x50,0x01,0x18,0x47,0x01,0x03,0x03,0x14,0xE4,0x46,0x21,0x44,0x53,0x4D,0x00,0x4F,0x4D,0x50,0x76,0x58,0x20,0x31,0x46,0x00,0x00,0x00,0x00};
-public:
+
     Transmitter(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
     void doFunction();
-    bool sendTx(void *);
+    
 
     void showMenu();
     void showValue();
@@ -197,64 +199,6 @@ void Transmitter::doFunction()
         default:
             break;
     }
-
-    sendTx(NULL);
-}
-
-bool Transmitter::sendTx(void *)
-{
-    // Calculate Channel Data
-    for(int i = 0; i < 16*11; i++){
-        if(radioData.channelData.channel[i/11] & (0x01 << (i % 11))){
-            txData[4+i/8] |= (0x01 << (i % 8));
-        }
-        else{
-            txData[4+i/8] &= ~(0x01 << (i % 8));
-        }
-    }
-
-    // Set Protocol
-    txData[1] &= 0xD0;
-    txData[1] |= (radioData.transmitterData.rangeCheck << 5) & 0x20;
-
-    // Set Range Check
-    txData[1] &= 0xE0;
-    txData[1] |= radioData.protocolList[radioData.transmitterData.selectedProtocol].value & 0x1F;
-
-    // Set Sub Protocol
-    txData[2] &= 0x8F;
-    txData[2] |= (radioData.protocolList[radioData.transmitterData.selectedProtocol].subProtocolList[radioData.transmitterData.selectedSubProtocol].value << 4) & 0x70;    
-
-    // Set RxNum
-    txData[2] &= 0xF0;
-    txData[2] |= radioData.transmitterData.rxNum & 0x0F;    
-
-    // Set Power
-    txData[2] &= 0x70;
-    txData[2] |= (radioData.transmitterData.powerValue) << 7 & 0x80;   
-
-    // Set binding bit
-    switch (radioData.transmitterData.bindingState)
-    {
-        case radioData.BINDED:
-        case radioData.BINDING_FAILED:
-            break;
-        case radioData.BINDING_STARTED:
-            txData[1] |= 0x80;
-            break;
-        case radioData.BINDING:
-            txData[1] |= 0x80;
-            break;
-        case radioData.BINDING_FINISHED:
-            txData[1] &= ~0x80;
-            break;  
-        default:
-            break;
-    }
-
-    // Send Data
-    Serial1.write(txData,27);
-    return true;
 }
 
 #endif

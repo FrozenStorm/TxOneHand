@@ -1,4 +1,5 @@
 /* -------------------- Include --------------------------------------------------------------------------------*/
+
 #include <Arduino.h>
 #include <SPI.h>
 #include <TFT_eSPI.h>
@@ -19,6 +20,9 @@
 #include "Model.hpp"
 #include "RadioMenu.hpp"
 #include "DualRate.hpp"
+
+#define TIMER_INTERRUPT_DEBUG      1
+#include "ESP32_New_TimerInterrupt.h"
 
 /* -------------------- Defines --------------------------------------------------------------------------------*/
 #define PIN_MULTI_TX          43
@@ -41,6 +45,7 @@ Adafruit_LSM303_Mag_Unified       mag   = Adafruit_LSM303_Mag_Unified(30302);
 Adafruit_BMP085_Unified           bmp   = Adafruit_BMP085_Unified(18001);
 float                             seaLevelPressure = SENSORS_PRESSURE_SEALEVELHPA;
 GNSS                              gnss;    
+ESP32Timer                        ITimer1(1);
 uint32_t                          targetTime = 0;         
 RadioData                         radioData = RadioData();
 AnalogToDigital                   analogToDigital = AnalogToDigital(tft, radioData);
@@ -55,6 +60,7 @@ Model                             model = Model(tft, radioData);
 RadioMenu                         radioMenu = RadioMenu(tft, radioData, &trim);
 /* -------------------- Functions Prototypes -------------------------------------------------------------------*/
 void readSensor(void);
+bool IRAM_ATTR sendTx(void * timerNo);
 
 /* -------------------- Setup ----------------------------------------------------------------------------------*/
 void setup() {
@@ -120,6 +126,8 @@ void setup() {
   // Loop Delay
   targetTime = millis() + 1000; 
 
+  // Init Transmitter Interrupt Timer
+  ITimer1.attachInterruptInterval(10000, sendTx); // 10ms
 }
 
 /* -------------------- Main -----------------------------------------------------------------------------------*/
@@ -194,4 +202,60 @@ void readSensor(void){
     tft.print(F("Temp="));
     tft.println(temperature);
   }
+}
+
+bool IRAM_ATTR sendTx(void * timerNo)
+{
+    // Calculate Channel Data
+    for(int i = 0; i < 16*11; i++){
+        if(radioData.channelData.channel[i/11] & (0x01 << (i % 11))){
+            transmitter.txData[4+i/8] |= (0x01 << (i % 8));
+        }
+        else{
+            transmitter.txData[4+i/8] &= ~(0x01 << (i % 8));
+        }
+    }
+
+    // Set Protocol
+    transmitter.txData[1] &= 0xD0;
+    transmitter.txData[1] |= (radioData.transmitterData.rangeCheck << 5) & 0x20;
+
+    // Set Range Check
+    transmitter.txData[1] &= 0xE0;
+    transmitter.txData[1] |= radioData.protocolList[radioData.transmitterData.selectedProtocol].value & 0x1F;
+
+    // Set Sub Protocol
+    transmitter.txData[2] &= 0x8F;
+    transmitter.txData[2] |= (radioData.protocolList[radioData.transmitterData.selectedProtocol].subProtocolList[radioData.transmitterData.selectedSubProtocol].value << 4) & 0x70;    
+
+    // Set RxNum
+    transmitter.txData[2] &= 0xF0;
+    transmitter.txData[2] |= radioData.transmitterData.rxNum & 0x0F;    
+
+    // Set Power
+    transmitter.txData[2] &= 0x70;
+    transmitter.txData[2] |= (radioData.transmitterData.powerValue) << 7 & 0x80;   
+
+    // Set binding bit
+    switch (radioData.transmitterData.bindingState)
+    {
+        case radioData.BINDED:
+        case radioData.BINDING_FAILED:
+            break;
+        case radioData.BINDING_STARTED:
+            transmitter.txData[1] |= 0x80;
+            break;
+        case radioData.BINDING:
+            transmitter.txData[1] |= 0x80;
+            break;
+        case radioData.BINDING_FINISHED:
+            transmitter.txData[1] &= ~0x80;
+            break;  
+        default:
+            break;
+    }
+
+    // Send Data
+    Serial1.write(transmitter.txData,27);
+    return true;
 }
