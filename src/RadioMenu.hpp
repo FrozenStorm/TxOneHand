@@ -35,7 +35,7 @@ void RadioMenu::addEntry(RadioClass* menuEntry)
 
 void RadioMenu::showMenu()
 {
-    char myString[10];
+    char myString[MODEL_NAME_LENGTH+5];
 
     tft.setTextDatum(MC_DATUM);
     previousEntry();
@@ -57,7 +57,8 @@ void RadioMenu::showMenu()
     tft.drawString(myString,tft.width(),0,2);    
 
     tft.setTextDatum(TL_DATUM);
-    tft.drawString(radioData.getModelName(),0,0,2);
+    sprintf(myString,"%-13s",radioData.getModelName());
+    tft.drawString(myString,0,0,2);
 
     tft.setCursor(0, tft.height()/2, 2);
     tft.println();

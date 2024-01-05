@@ -124,7 +124,17 @@ void setup() {
 
 /* -------------------- Main -----------------------------------------------------------------------------------*/
 void loop() {
-  // put your main code here, to run repeatedly:
+  static uint32_t lastCall = millis();
+  char myString[20];
+  uint32_t deltaT = 0;
+  static uint32_t maxHold = 0;
+
+  deltaT = millis()-lastCall;
+  lastCall = lastCall + deltaT;
+  if(deltaT > maxHold) maxHold = deltaT;
+  sprintf(myString,"%3d/%dms",deltaT, maxHold);
+  tft.setTextDatum(TR_DATUM);
+  tft.drawString(myString,tft.width(),15,2);    
   
   if (targetTime < millis()) {
     targetTime += 100;
@@ -147,8 +157,6 @@ void loop() {
   mixer.doFunction();
   functionToChannel.doFunction();
   transmitter.doFunction();
-
-  delay(10);
 }
 
 /* -------------------- Functions ------------------------------------------------------------------------------*/
