@@ -75,7 +75,7 @@ void setup() {
   tft.setRotation(0);
   tft.fillScreen(TFT_BLACK);
   tft.setCursor(0, 0, 2);
-  tft.setTextColor(TFT_WHITE,TFT_BLACK);  
+  tft.setTextColor(TFT_WHITE,TFT_BLACK,true);  
   tft.setTextSize(1);
 
   // I2C 10DOF Sensor

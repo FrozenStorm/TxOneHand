@@ -35,7 +35,7 @@ void RadioMenu::addEntry(RadioClass* menuEntry)
 
 void RadioMenu::showMenu()
 {
-    char myString[MODEL_NAME_LENGTH+5];
+    char myString[40];
 
     tft.setTextDatum(MC_DATUM);
     previousEntry();
@@ -52,14 +52,15 @@ void RadioMenu::showMenu()
     tft.setTextSize(1);
     tft.drawString("TxOneHand by Z-Craft",tft.width()/2, tft.height()/2-20,2);
 
+    tft.setTextDatum(TL_DATUM);
+    sprintf(myString,"% -25s  \n",radioData.getModelName());
+    tft.drawString(myString,0,0,2);
+
     tft.setTextDatum(TR_DATUM);
     sprintf(myString,"%1.1fV",radioData.analogData.battery);
     tft.drawString(myString,tft.width(),0,2);    
 
     tft.setTextDatum(TL_DATUM);
-    sprintf(myString,"%-13s",radioData.getModelName());
-    tft.drawString(myString,0,0,2);
-
     tft.setCursor(0, tft.height()/2, 2);
     tft.println();
 

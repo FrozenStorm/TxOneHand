@@ -38,7 +38,7 @@ void Model::showMenu()
     sprintf(myString,"Model = %-2d\n",radioData.selectedModel);
     tft.drawString(myString, posW, posH+incH*0);
 
-    sprintf(myString,"Name = %-12s  \n",radioData.getModelName()); // TODO länge abhängig machen von define
+    sprintf(myString,"Name = % -25s  \n",radioData.getModelName()); // TODO länge abhängig machen von define
     tft.drawString(myString, posW, posH+incH*1);
 
     drawMenuPointer(selectedMenuEntry,NUMBER_OF_MENUENTRIES);

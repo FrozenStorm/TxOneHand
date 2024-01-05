@@ -32,15 +32,15 @@ const char * FunctionToChannel::getTitle()
 
 void FunctionToChannel::showMenu()
 {
-    sprintf(myString,"Channel = %-2d\n",selectedMenuChannel+1);
+    sprintf(myString,"Channel = %-2d       \n",selectedMenuChannel+1);
     tft.drawString(myString, posW, posH+incH*0);
-    sprintf(myString,"Func. = %-12s\n",radioData.functionNames[radioData.functionToChannelData.functionOnChannel[selectedMenuChannel]]);
+    sprintf(myString,"Func. = % -12s       \n",radioData.functionNames[radioData.functionToChannelData.functionOnChannel[selectedMenuChannel]]);
     tft.drawString(myString, posW, posH+incH*1);
-    sprintf(myString,"Invert = %d\n",radioData.functionToChannelData.invertChannel[selectedMenuChannel]);
+    sprintf(myString,"Invert = %d         \n",radioData.functionToChannelData.invertChannel[selectedMenuChannel]);
     tft.drawString(myString, posW, posH+incH*2);
-    sprintf(myString,"Min = %-4d\n",radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel]);
+    sprintf(myString,"Min = %-4d       \n",radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel]);
     tft.drawString(myString, posW, posH+incH*3);
-    sprintf(myString,"Max = %-4d\n",radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel]);
+    sprintf(myString,"Max = %-4d        \n",radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel]);
     tft.drawString(myString, posW, posH+incH*4);
 
     drawMenuPointer(selectedMenuEntry,NUMBER_OF_MENUENTRIES);
@@ -88,6 +88,7 @@ void FunctionToChannel::doFunction()
 
         radioData.channelData.channel[i] = value; // Nur eine Zuweisung damit es Interrupt sicher ist
     }
+    radioData.channelData.channel[13] = radioData.channelData.channel[2]; // Failsafe oder so Begrenzung auf Kanal 14 von Throttle
 }
 
 
