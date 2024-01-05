@@ -6,6 +6,7 @@
 class FunctionToChannel : public RadioClass
 {
 private:
+    int stepSize = 20;
     enum MenuEntries{CHANNEL, FUNCTION, INVERT, LOWER, UPPER, NUMBER_OF_MENUENTRIES};
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
     int selectedMenuChannel = 0;
@@ -47,13 +48,13 @@ void FunctionToChannel::showMenu()
 
 void FunctionToChannel::doFunction()
 {
-    double vtail_left = (-radioData.functionData.roll - radioData.functionData.pitch);
+    float vtail_left = (-radioData.functionData.roll - radioData.functionData.pitch);
     limitValue(vtail_left);
-    double vtail_right = (-radioData.functionData.roll + radioData.functionData.pitch);
+    float vtail_right = (-radioData.functionData.roll + radioData.functionData.pitch);
     limitValue(vtail_right);  
   
-    for(int i = 0; i < sizeof(radioData.channelData.channel)/sizeof(int); i++){
-        double value;
+    for(int i = 0; i < SUPPORTED_CHANNELS; i++){
+        float value;
         switch(radioData.functionToChannelData.functionOnChannel[i])
         {
             case radioData.NONE:
@@ -118,13 +119,13 @@ bool FunctionToChannel::left()
         radioData.functionToChannelData.invertChannel[selectedMenuChannel] = !radioData.functionToChannelData.invertChannel[selectedMenuChannel];
         break;
     case LOWER:
-        radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel]-=radioData.functionToChannelData.stepSize;
+        radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel]-=stepSize;
         if(radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel] < 0) radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel] = 0;
         break;
     case UPPER:
-        radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel]-=radioData.functionToChannelData.stepSize;
+        radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel]-=stepSize;
         if(radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel] < 0) radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel] = 0;
-        if(radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel] <= radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel]) radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel]+=radioData.functionToChannelData.stepSize;
+        if(radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel] <= radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel]) radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel]+=stepSize;
         break;
     case NUMBER_OF_MENUENTRIES:
         return true;
@@ -154,12 +155,12 @@ bool FunctionToChannel::right()
         radioData.functionToChannelData.invertChannel[selectedMenuChannel] = !radioData.functionToChannelData.invertChannel[selectedMenuChannel];
         break;
     case LOWER:
-        radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel]+=radioData.functionToChannelData.stepSize;
+        radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel]+=stepSize;
         if(radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel] > 2047) radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel] = 2047;
-        if(radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel] >= radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel]) radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel]-=radioData.functionToChannelData.stepSize;
+        if(radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel] >= radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel]) radioData.functionToChannelData.lowerLimitChannel[selectedMenuChannel]-=stepSize;
         break;
     case UPPER:
-        radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel]+=radioData.functionToChannelData.stepSize;
+        radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel]+=stepSize;
         if(radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel] > 2047) radioData.functionToChannelData.upperLimitChannel[selectedMenuChannel] = 2047;
         break;
     case NUMBER_OF_MENUENTRIES:

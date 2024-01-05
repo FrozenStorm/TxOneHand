@@ -83,6 +83,7 @@ void RadioMenu::processInputs()
         if((*menuPointer)->left() == true)
         {
             radioData.storeData();
+            radioData.storeSelectedModel();
             tft.fillScreen(TFT_BLACK);
             previousEntry();            
         }
@@ -92,6 +93,7 @@ void RadioMenu::processInputs()
         if((*menuPointer)->right() == true)
         {
             radioData.storeData();
+            radioData.storeSelectedModel();
             tft.fillScreen(TFT_BLACK);
             nextEntry();                
         }
@@ -100,6 +102,7 @@ void RadioMenu::processInputs()
     if(radioData.digitalData.centerLongPressEvent == true) 
     {
         radioData.storeData();
+        radioData.storeSelectedModel();
         tft.fillScreen(TFT_BLACK);
         if(menuPointer == menuPoints.begin()) nextEntry();
         else menuPointer = menuPoints.begin();

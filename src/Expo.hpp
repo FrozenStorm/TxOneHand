@@ -7,9 +7,10 @@
 class Expo : public RadioClass
 {
 private:
+    float stepSize = 0.05;
     enum MenuEntries{PITCH, ROLL, THROTTLE, NUMBER_OF_MENUENTRIES};
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
-    void calcExpo(double& value, const double expo);
+    void calcExpo(float& value, const float expo);
 public:
     Expo(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
     void doFunction();
@@ -58,15 +59,15 @@ bool Expo::left()
     switch (selectedMenuEntry)
     {
     case PITCH:
-        radioData.expoData.pitch-=radioData.expoData.stepSize;
+        radioData.expoData.pitch-=stepSize;
         limitValue(radioData.expoData.pitch);
         break;
     case ROLL:
-        radioData.expoData.roll-=radioData.expoData.stepSize;
+        radioData.expoData.roll-=stepSize;
         limitValue(radioData.expoData.roll);
         break;
     case THROTTLE:
-        radioData.expoData.throttle-=radioData.expoData.stepSize;
+        radioData.expoData.throttle-=stepSize;
         limitValue(radioData.expoData.throttle);
         break;
     case NUMBER_OF_MENUENTRIES:
@@ -83,15 +84,15 @@ bool Expo::right()
     switch (selectedMenuEntry)
     {
     case PITCH:
-        radioData.expoData.pitch+=radioData.expoData.stepSize;
+        radioData.expoData.pitch+=stepSize;
         limitValue(radioData.expoData.pitch);
         break;
     case ROLL:
-        radioData.expoData.roll+=radioData.expoData.stepSize;
+        radioData.expoData.roll+=stepSize;
         limitValue(radioData.expoData.roll);
         break;
     case THROTTLE:
-        radioData.expoData.throttle+=radioData.expoData.stepSize;
+        radioData.expoData.throttle+=stepSize;
         limitValue(radioData.expoData.throttle);
         break;
     case NUMBER_OF_MENUENTRIES:
@@ -110,7 +111,7 @@ void Expo::doFunction()
     calcExpo(radioData.functionData.pitch, radioData.expoData.pitch);
 }
 
-void Expo::calcExpo(double& value, const double expo)
+void Expo::calcExpo(float& value, const float expo)
 {
     value = ((1 - expo) * value + expo * pow(value,3));
     limitValue(value);

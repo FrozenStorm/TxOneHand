@@ -6,6 +6,7 @@
 class Mixer : public RadioClass
 {
 private:
+    float stepSize = 0.05;
     enum MenuEntries{THROTTLE, NUMBER_OF_MENUENTRIES};
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
 
@@ -54,7 +55,7 @@ bool Mixer::left()
     switch (selectedMenuEntry)
     {
     case THROTTLE:
-        radioData.mixerData.throttleToPitch-=radioData.mixerData.stepSize;
+        radioData.mixerData.throttleToPitch-=stepSize;
         limitValue(radioData.mixerData.throttleToPitch);
         break;
     case NUMBER_OF_MENUENTRIES:
@@ -70,7 +71,7 @@ bool Mixer::right()
     switch (selectedMenuEntry)
     {
     case THROTTLE:
-        radioData.mixerData.throttleToPitch+=radioData.mixerData.stepSize;
+        radioData.mixerData.throttleToPitch+=stepSize;
         limitValue(radioData.mixerData.throttleToPitch);
         break;
     case NUMBER_OF_MENUENTRIES:

@@ -6,18 +6,24 @@
 #include <string.h>
 #include "Protocol.hpp"
 
+#define MAX_NUMBER_OF_MODELS 4
+#define MODEL_NAME_LENGTH 12
+#define CHARACTER_SET_LENGTH 38
+#define CRC_VALUE 42
+#define SUPPORTED_CHANNELS 8
+
 class RadioData
 {
 private:
-    int eepromSize = 0;
+    int eepromSizeModel = 0;
+    int eepromSizeGobal = 0;
 public:
-   
     struct AnalogToDigitalData
     {
         struct StickLimit{
-            double min;
-            double max;
-            double center;
+            float min;
+            float max;
+            float center;
             bool invert;
         };
         StickLimit stickLimitUpDown;
@@ -26,39 +32,31 @@ public:
 
         struct MenuButtonLimit
         {
-            double up;
-            double down;
-            double left;
-            double right;
-            double center;
+            float up;
+            float down;
+            float left;
+            float right;
+            float center;
         };
         MenuButtonLimit menuButtonLimit;
-        double menuButtonTolerance;
-        long longPressDurationMs;
-
-        unsigned long startPressTimeUpMs;
-        unsigned long startPressTimeDownMs;
-        unsigned long startPressTimeLeftMs;
-        unsigned long startPressTimeRightMs;
-        unsigned long startPressTimeCenterMs;
+        float menuButtonTolerance;
+        int longPressDurationMs;
     };
     AnalogToDigitalData analogToDigitalData;
     
 
     struct ExpoData{
-        double roll;
-        double pitch;
-        double throttle;
-        double stepSize;
+        float roll;
+        float pitch;
+        float throttle;
     };
     ExpoData expoData;
 
     struct DualRateData
     {
-        double roll;
-        double pitch;
-        double throttle;
-        double stepSize;
+        float roll;
+        float pitch;
+        float throttle;
     };
     DualRateData dualRateData;
 
@@ -67,15 +65,12 @@ public:
         int roll;
         int pitch;
         int slider;
-        double stepSize;
-        int stepCountLimit;
     };
     TrimData trimData;
 
     struct MixerData
     {
-        double throttleToPitch;
-        double stepSize;
+        float throttleToPitch;
     };
     MixerData mixerData;
 
@@ -84,39 +79,38 @@ public:
 
     struct FunctionToChannelData
     {
-        bool invertChannel[16];
-        Function functionOnChannel[16];
-        int upperLimitChannel[16];
-        int lowerLimitChannel[16];
-        int stepSize;
+        bool invertChannel[SUPPORTED_CHANNELS];
+        Function functionOnChannel[SUPPORTED_CHANNELS];
+        int upperLimitChannel[SUPPORTED_CHANNELS];
+        int lowerLimitChannel[SUPPORTED_CHANNELS];
     };
     FunctionToChannelData functionToChannelData;
 
     struct RawData
     {
-        double stickUpDown = 0;
-        double stickLeftRight = 0;
-        double slider = 0;
-        double menu = 0;
-        double battery = 0;
+        float stickUpDown = 0;
+        float stickLeftRight = 0;
+        float slider = 0;
+        float menu = 0;
+        float battery = 0;
     };
     RawData rawData;
 
     struct AnalogData
     {
-        double stickUpDown = 0;
-        double stickLeftRight = 0;
-        double slider = 0;
-        double menu = 0;
-        double battery = 0; 
+        float stickUpDown = 0;
+        float stickLeftRight = 0;
+        float slider = 0;
+        float menu = 0;
+        float battery = 0; 
     };
     AnalogData analogData;
     
     struct DigitalData
     {
-        double stickUpDown = 0;
-        double stickLeftRight = 0;
-        double slider = 0;
+        float stickUpDown = 0;
+        float stickLeftRight = 0;
+        float slider = 0;
 
         bool sideSwitch = 0;
 
@@ -142,9 +136,9 @@ public:
 
     struct FunctionData
     {
-        double pitch = 0;
-        double roll = 0;
-        double throttle = 0;
+        float pitch = 0;
+        float roll = 0;
+        float throttle = 0;
     };
     FunctionData functionData;
     
@@ -574,19 +568,36 @@ public:
     enum BindingState{ BINDED, BINDING_STARTED, BINDING, BINDING_FINISHED, BINDING_FAILED, NUMBER_OF_BINDING_STATES};
     const char* bindingStateNames[NUMBER_OF_BINDING_STATES] = {"Binded", "Binding started", "Binding", "Binding finished", "Binding failed"};
 
+    enum PowerValue{ POWER_VALUE_HIGH, POWER_VALUE_LOW, NUMBER_OF_POWERVALUES};
+    const char* powerValueNames[NUMBER_OF_POWERVALUES] = {"High", "Low"};
+
     struct TransmitterData
     {
         BindingState bindingState;
-        unsigned int selectedProtocol;
-        unsigned int selectedSubProtocol;
-        unsigned char txData[27]; // TODO wiso muss hier unsigend char stehen, damit das init mit 0xE3 funktioniert
-        unsigned char rxData[28];
+        unsigned char selectedProtocol;
+        unsigned char selectedSubProtocol;
+        bool rangeCheck;
+        unsigned char rxNum;
+        PowerValue powerValue;
     };
     TransmitterData transmitterData;
+    
+    const char modelNameCharacters[CHARACTER_SET_LENGTH] = {' ','-','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','0','1','2','3','4','5','6','7','8','9'};
+    unsigned int selectedModel;
+    struct ModelData
+    {
+        char modelName[MODEL_NAME_LENGTH];
+        char crc;
+    };
+    ModelData modelData;
 
+    void setDefaultValues();
 
     void storeData();
     void loadData();
+
+    void storeSelectedModel();
+    void loadSelectedModel();
     
     RadioData(/* args */);
     ~RadioData();
@@ -594,48 +605,73 @@ public:
 
 RadioData::RadioData(/* args */)
 {
+    setDefaultValues();
+
+    float f=0;
+    double d=0;
+    Serial.printf("float = %d\n",sizeof(f));
+    Serial.printf("double = %d\n",sizeof(d));
+    eepromSizeModel = 0;
+    eepromSizeModel += sizeof(AnalogToDigitalData);
+    Serial.printf("AnalogToDigitalData = %d\n",sizeof(AnalogToDigitalData));
+    eepromSizeModel += sizeof(ExpoData);
+    Serial.printf("ExpoData = %d\n",sizeof(ExpoData));
+    eepromSizeModel += sizeof(DualRateData);
+    Serial.printf("DualRateData = %d\n",sizeof(DualRateData));
+    eepromSizeModel += sizeof(TrimData);
+    Serial.printf("TrimData = %d\n",sizeof(TrimData));
+    eepromSizeModel += sizeof(FunctionToChannelData);
+    Serial.printf("FunctionToChannelData = %d\n",sizeof(FunctionToChannelData));
+    eepromSizeModel += sizeof(MixerData);
+    Serial.printf("MixerData = %d\n",sizeof(MixerData));
+    eepromSizeModel += sizeof(TransmitterData);
+    Serial.printf("TransmitterData = %d\n",sizeof(TransmitterData));
+    eepromSizeModel += sizeof(ModelData);
+    Serial.printf("ModelData = %d\n",sizeof(ModelData));
+    eepromSizeModel = eepromSizeModel * MAX_NUMBER_OF_MODELS;
+    Serial.printf("eepromSizeModel = %d\n",eepromSizeModel);
+
+    eepromSizeGobal = sizeof(selectedModel);
+    Serial.printf("eepromSizeGobal = %d\n",eepromSizeGobal);
+}
+
+RadioData::~RadioData()
+{
+}
+
+void RadioData::setDefaultValues()
+{
     analogToDigitalData = {
         .stickLimitUpDown = {.min = 0.01, .max = 3.01, .center = 1.34, .invert = true},
         .stickLimitLeftRight = {.min = 0.13, .max = 2.93, .center = 1.5, .invert = false},
         .stickLimitSlider = {.min = 0.25, .max = 1.45, .center = 0.85, .invert = true},
         .menuButtonLimit = {.up = 1.67, .down = 0.53, .left = 0.38, .right = 1.38, .center = 0.96},
         .menuButtonTolerance = 0.1,
-        .longPressDurationMs = 600,
-        .startPressTimeUpMs = 0,
-        .startPressTimeDownMs = 0,
-        .startPressTimeLeftMs = 0,
-        .startPressTimeRightMs = 0,
-        .startPressTimeCenterMs = 0
+        .longPressDurationMs = 600
     };
     expoData = {
         .roll = 0.3,
         .pitch = 0.3,
-        .throttle = 0,
-        .stepSize = 0.05
+        .throttle = 0
     };
     dualRateData = {
         .roll = 1,
         .pitch = 1,
         .throttle = 1,
-        .stepSize = 0.05
     };
     trimData = {
         .roll = 0,
         .pitch = 0,
-        .slider = 0,
-        .stepSize = 0.01,
-        .stepCountLimit = 20
+        .slider = 0
     };
     mixerData = {
-        .throttleToPitch = 0,
-        .stepSize = 0.05
+        .throttleToPitch = 0
     };
     functionToChannelData = {
-        .invertChannel = {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false},
-        .functionOnChannel = {VTAIL_LEFT, VTAIL_RIGHT, THROTTLE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, THROTTLE, NONE, NONE},
-        .upperLimitChannel = {2047,2047,2047,2047,2047,2047,2047,2047,2047,2047,2047,2047,2047,2047,2047,2047},
-        .lowerLimitChannel = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        .stepSize = 20
+        .invertChannel = {false,false,false,false,false,false,false,false},
+        .functionOnChannel = {VTAIL_LEFT, VTAIL_RIGHT, THROTTLE, NONE, NONE, NONE, NONE, NONE},
+        .upperLimitChannel = {2047,2047,2047,2047,2047,2047,2047,2047},
+        .lowerLimitChannel = {0,0,0,0,0,0,0,0}
     };
     rawData = {};
     analogData = {};
@@ -646,109 +682,129 @@ RadioData::RadioData(/* args */)
         .bindingState = BINDED,
         .selectedProtocol = 6,
         .selectedSubProtocol = 2,
-        .txData = {0x55,0x06,0x20,0x07,0x00,0x24,0x20,0x07,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x00,0x04,0x20,0x00,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x08},
-        .rxData = {0x4D,0x50,0x01,0x18,0x47,0x01,0x03,0x03,0x14,0xE4,0x46,0x21,0x44,0x53,0x4D,0x00,0x4F,0x4D,0x50,0x76,0x58,0x20,0x31,0x46,0x00,0x00,0x00,0x00}
+        .rangeCheck = false,
+        .rxNum = 0,
+        .powerValue = POWER_VALUE_HIGH,
     };
-
-    
-    eepromSize += sizeof(AnalogToDigitalData);
-    eepromSize += sizeof(ExpoData);
-    eepromSize += sizeof(DualRateData);
-    eepromSize += sizeof(TrimData);
-    eepromSize += sizeof(FunctionToChannelData);
-    eepromSize += sizeof(MixerData);
-    // eepromSize += sizeof(RawData);
-    // eepromSize += sizeof(AnalogData);
-    // eepromSize += sizeof(DigitalData);
-    // eepromSize += sizeof(FunctionData);
-    // eepromSize += sizeof(ChannelData);
-}
-
-RadioData::~RadioData()
-{
+    modelData = {
+        .modelName = {0,0,0,0,0,0,0,0,0,0,0,0},
+        .crc = CRC_VALUE
+    };
 }
 
 void RadioData::storeData()
 {
-    int address = 0;
+    int address = eepromSizeModel / MAX_NUMBER_OF_MODELS * selectedModel + eepromSizeGobal;
 
-    EEPROM.begin(eepromSize);
 
-    EEPROM.put(address,analogToDigitalData);
-    address += sizeof(AnalogToDigitalData);
+    // TODO REMOVE
+    eepromSizeModel = 0;
+    eepromSizeModel += sizeof(AnalogToDigitalData);
+    Serial.printf("AnalogToDigitalData = %d\n",sizeof(AnalogToDigitalData));
+    eepromSizeModel += sizeof(ExpoData);
+    Serial.printf("ExpoData = %d\n",sizeof(ExpoData));
+    eepromSizeModel += sizeof(DualRateData);
+    Serial.printf("DualRateData = %d\n",sizeof(DualRateData));
+    eepromSizeModel += sizeof(TrimData);
+    Serial.printf("TrimData = %d\n",sizeof(TrimData));
+    eepromSizeModel += sizeof(FunctionToChannelData);
+    Serial.printf("FunctionToChannelData = %d\n",sizeof(FunctionToChannelData));
+    eepromSizeModel += sizeof(MixerData);
+    Serial.printf("MixerData = %d\n",sizeof(MixerData));
+    eepromSizeModel += sizeof(TransmitterData);
+    Serial.printf("TransmitterData = %d\n",sizeof(TransmitterData));
+    eepromSizeModel += sizeof(ModelData);
+    Serial.printf("ModelData = %d\n",sizeof(ModelData));
+    eepromSizeModel = eepromSizeModel * MAX_NUMBER_OF_MODELS;
+    Serial.printf("eepromSizeModel = %d\n",eepromSizeModel);
 
-    EEPROM.put(address,expoData);
-    address += sizeof(ExpoData);
+    eepromSizeGobal = sizeof(selectedModel);
+    Serial.printf("eepromSizeGobal = %d\n",eepromSizeGobal);
 
-    EEPROM.put(address,dualRateData);
-    address += sizeof(DualRateData);
 
-    EEPROM.put(address,trimData);
-    address += sizeof(TrimData);
+    if(EEPROM.begin(eepromSizeModel + eepromSizeGobal) == true){
+        EEPROM.put(address,analogToDigitalData);
+        address += sizeof(AnalogToDigitalData);
 
-    EEPROM.put(address,functionToChannelData);
-    address += sizeof(FunctionToChannelData);
+        EEPROM.put(address,expoData);
+        address += sizeof(ExpoData);
 
-    EEPROM.put(address,mixerData);
-    address += sizeof(MixerData);
+        EEPROM.put(address,dualRateData);
+        address += sizeof(DualRateData);
 
-    // TODO SAVE BINDING STATE
+        EEPROM.put(address,trimData);
+        address += sizeof(TrimData);
 
-    //EEPROM.put<RawData>(address,rawData);
-    //address += sizeof(RawData);
+        EEPROM.put(address,functionToChannelData);
+        address += sizeof(FunctionToChannelData);
 
-    //EEPROM.put<AnalogData>(address,analogData);
-    //address += sizeof(AnalogData);
+        EEPROM.put(address,mixerData);
+        address += sizeof(MixerData);
 
-    //EEPROM.put<DigitalData>(address,digitalData);
-    //address += sizeof(DigitalData);
+        EEPROM.put(address,mixerData);
+        address += sizeof(MixerData);
 
-    //EEPROM.put<FunctionData>(address,functionData);
-    //address += sizeof(FunctionData);
+        EEPROM.put(address,transmitterData);
+        address += sizeof(TransmitterData);
 
-    //EEPROM.put<ChannelData>(address,channelData);
-    //address += sizeof(ChannelData);
+        EEPROM.put(address,modelData);
+        address += sizeof(ModelData);
+    }
     EEPROM.end();
 }
 
 void RadioData::loadData()
 {
-    int address = 0; 
+    int address = eepromSizeModel / MAX_NUMBER_OF_MODELS * selectedModel + eepromSizeGobal;
 
-    EEPROM.begin(eepromSize);
+    if(EEPROM.begin(eepromSizeModel + eepromSizeGobal) == true){
+        EEPROM.get(address,analogToDigitalData);
+        address += sizeof(AnalogToDigitalData);
 
-    EEPROM.get(address, analogToDigitalData);
-    address += sizeof(AnalogToDigitalData);
+        EEPROM.get(address,expoData);
+        address += sizeof(ExpoData);
 
-    EEPROM.get(address, expoData);
-    address += sizeof(ExpoData);
+        EEPROM.get(address,dualRateData);
+        address += sizeof(DualRateData);
 
-    EEPROM.get(address, dualRateData);
-    address += sizeof(DualRateData);
+        EEPROM.get(address,trimData);
+        address += sizeof(TrimData);
 
-    EEPROM.get(address, trimData);
-    address += sizeof(TrimData);
+        EEPROM.get(address,functionToChannelData);
+        address += sizeof(FunctionToChannelData);
 
-    EEPROM.get(address, functionToChannelData);
-    address += sizeof(FunctionToChannelData);  
+        EEPROM.get(address,mixerData);
+        address += sizeof(MixerData);
 
-    EEPROM.get(address, mixerData);
-    address += sizeof(MixerData);   
+        EEPROM.get(address,mixerData);
+        address += sizeof(MixerData);
 
-    //EEPROM.get<RawData>(address, rawData);
-    //address += sizeof(RawData);
+        EEPROM.get(address,transmitterData);
+        address += sizeof(TransmitterData);
 
-    //EEPROM.get<AnalogData>(address, analogData);
-    //address += sizeof(AnalogData);
+        EEPROM.get(address,modelData);
+        address += sizeof(ModelData);
+    }
+    EEPROM.end();
 
-    //EEPROM.get<DigitalData>(address, digitalData);
-    //address += sizeof(DigitalData);
+    if(modelData.crc != CRC_VALUE){
+        setDefaultValues();
+    }
+}
 
-    //EEPROM.get<FunctionData>(address, functionData);
-    //address += sizeof(FunctionData);
+void RadioData::storeSelectedModel()
+{
+    if(EEPROM.begin(eepromSizeModel + eepromSizeGobal) == true){
+        EEPROM.put(0, selectedModel);
+    }
+    EEPROM.end();
+}
 
-    //EEPROM.get<ChannelData>(address, channelData);
-    //address += sizeof(ChannelData);
+void RadioData::loadSelectedModel()
+{
+    if(EEPROM.begin(eepromSizeModel + eepromSizeGobal) == true){
+        EEPROM.get(0, selectedModel);
+    }
     EEPROM.end();
 }
 

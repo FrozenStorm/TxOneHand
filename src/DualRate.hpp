@@ -6,9 +6,10 @@
 class DualRate : public RadioClass
 {
 private:
+    float stepSize = 0.05;
     enum MenuEntries{PITCH, ROLL, THROTTLE, NUMBER_OF_MENUENTRIES};
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
-    void calcRate(double& value, double rate);
+    void calcRate(float& value, float rate);
 public:
     DualRate(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
     void doFunction();
@@ -58,15 +59,15 @@ bool DualRate::left()
     switch (selectedMenuEntry)
     {
     case PITCH:
-        radioData.dualRateData.pitch-=radioData.dualRateData.stepSize;
+        radioData.dualRateData.pitch-=stepSize;
         if(radioData.dualRateData.pitch < 0 ) radioData.dualRateData.pitch = 0;
         break;
     case ROLL:
-        radioData.dualRateData.roll-=radioData.dualRateData.stepSize;
+        radioData.dualRateData.roll-=stepSize;
         if(radioData.dualRateData.roll < 0 ) radioData.dualRateData.roll = 0;
         break;
     case THROTTLE:
-        radioData.dualRateData.throttle-=radioData.dualRateData.stepSize;
+        radioData.dualRateData.throttle-=stepSize;
         if(radioData.dualRateData.throttle < 0 ) radioData.dualRateData.throttle = 0;
         break;
     case NUMBER_OF_MENUENTRIES:
@@ -82,15 +83,15 @@ bool DualRate::right()
         switch (selectedMenuEntry)
     {
     case PITCH:
-        radioData.dualRateData.pitch+=radioData.dualRateData.stepSize;
+        radioData.dualRateData.pitch+=stepSize;
         limitValue(radioData.dualRateData.roll);
         break;
     case ROLL:
-        radioData.dualRateData.roll+=radioData.dualRateData.stepSize;
+        radioData.dualRateData.roll+=stepSize;
         limitValue(radioData.dualRateData.roll);
         break;
     case THROTTLE:
-        radioData.dualRateData.throttle+=radioData.dualRateData.stepSize;
+        radioData.dualRateData.throttle+=stepSize;
         limitValue(radioData.dualRateData.roll);
         break;
     case NUMBER_OF_MENUENTRIES:
@@ -109,7 +110,7 @@ void DualRate::doFunction()
     calcRate(radioData.functionData.pitch, radioData.dualRateData.pitch);
 }
 
-void DualRate::calcRate(double& value, double rate)
+void DualRate::calcRate(float& value, float rate)
 {
     if(value > rate) value = rate;
     if(value < -rate) value = -rate;

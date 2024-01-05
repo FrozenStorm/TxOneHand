@@ -16,6 +16,7 @@
 #include "Mixer.hpp"
 #include "FunctionToChannel.hpp"
 #include "Transmitter.hpp"
+#include "Model.hpp"
 #include "RadioMenu.hpp"
 #include "DualRate.hpp"
 
@@ -50,6 +51,7 @@ Trim                              trim = Trim(tft, radioData);
 Mixer                             mixer = Mixer(tft, radioData);
 FunctionToChannel                 functionToChannel = FunctionToChannel(tft, radioData);
 Transmitter                       transmitter = Transmitter(tft, radioData);
+Model                             model = Model(tft, radioData);
 RadioMenu                         radioMenu = RadioMenu(tft, radioData, &trim);
 /* -------------------- Functions Prototypes -------------------------------------------------------------------*/
 void readSensor(void);
@@ -60,13 +62,13 @@ void setup() {
   Serial.begin(115200);
 
   // Menu
+  radioMenu.addEntry(&model);
+  radioMenu.addEntry(&transmitter);
   radioMenu.addEntry(&analogToDigital);
   radioMenu.addEntry(&expo);
   radioMenu.addEntry(&dualRate);
   radioMenu.addEntry(&mixer);
-  radioMenu.addEntry(&functionToChannel);
-  radioMenu.addEntry(&transmitter);
-  
+  radioMenu.addEntry(&functionToChannel);  
 
   // Display
   tft.init();
@@ -113,9 +115,11 @@ void setup() {
 
   //EEPROM
   radioData.loadData();
+  radioData.loadSelectedModel();
   
   // Loop Delay
   targetTime = millis() + 1000; 
+
 }
 
 /* -------------------- Main -----------------------------------------------------------------------------------*/

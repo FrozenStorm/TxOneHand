@@ -6,8 +6,11 @@
 class Transmitter : public RadioClass
 {
 private:
-    enum MenuEntries{BIND, PROTOCOL, SUBPROTOCOL, NUMBER_OF_MENUENTRIES};
+    enum MenuEntries{BIND, PROTOCOL, SUBPROTOCOL, RX_NUMBER, POWER_LEVEL, RANGE_CHECK, NUMBER_OF_MENUENTRIES};
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
+
+    unsigned char txData[27] = {0x55,0x06,0x20,0x07,0x00,0x24,0x20,0x07,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x00,0x04,0x20,0x00,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x08}; // TODO wiso muss hier unsigend char stehen, damit das init mit 0xE3 funktioniert
+    unsigned char rxData[28] = {0x4D,0x50,0x01,0x18,0x47,0x01,0x03,0x03,0x14,0xE4,0x46,0x21,0x44,0x53,0x4D,0x00,0x4F,0x4D,0x50,0x76,0x58,0x20,0x31,0x46,0x00,0x00,0x00,0x00};
 public:
     Transmitter(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
     void doFunction();
@@ -40,6 +43,15 @@ void Transmitter::showMenu()
     sprintf(myString,"Sub P. = %-16s\n",radioData.protocolList[radioData.transmitterData.selectedProtocol].subProtocolList[radioData.transmitterData.selectedSubProtocol].name);
     tft.drawString(myString, posW, posH+incH*2);
 
+    sprintf(myString,"RxNum = %-2d\n",radioData.transmitterData.rxNum);
+    tft.drawString(myString, posW, posH+incH*3);
+
+    sprintf(myString,"Power = %-8s\n",radioData.powerValueNames[radioData.transmitterData.powerValue]);
+    tft.drawString(myString, posW, posH+incH*4);
+
+    sprintf(myString,"Range Check = %d\n",radioData.transmitterData.rangeCheck);
+    tft.drawString(myString, posW, posH+incH*5);
+
     drawMenuPointer(selectedMenuEntry,NUMBER_OF_MENUENTRIES);
 }
 
@@ -68,6 +80,17 @@ bool Transmitter::left()
         if(radioData.transmitterData.selectedSubProtocol > 0) radioData.transmitterData.selectedSubProtocol--;
         else radioData.transmitterData.selectedSubProtocol = radioData.protocolList[radioData.transmitterData.selectedProtocol].subProtocolList.size()-1;
         break;
+    case RX_NUMBER:
+        if(radioData.transmitterData.rxNum > 0) radioData.transmitterData.rxNum--;
+        else radioData.transmitterData.rxNum = 15;
+        break;
+    case POWER_LEVEL:
+        if(radioData.transmitterData.powerValue == radioData.POWER_VALUE_HIGH) radioData.transmitterData.powerValue = radioData.POWER_VALUE_LOW;
+        else radioData.transmitterData.powerValue = radioData.POWER_VALUE_HIGH;
+        break;
+    case RANGE_CHECK:
+        radioData.transmitterData.rangeCheck = !radioData.transmitterData.rangeCheck;
+        break; 
     case NUMBER_OF_MENUENTRIES:
         return true;
         break;
@@ -91,13 +114,24 @@ bool Transmitter::right()
         if(radioData.transmitterData.selectedSubProtocol < radioData.protocolList[radioData.transmitterData.selectedProtocol].subProtocolList.size()-1) radioData.transmitterData.selectedSubProtocol++;
         else radioData.transmitterData.selectedSubProtocol = 0;
         break;
+    case RX_NUMBER:
+        if(radioData.transmitterData.rxNum < 15) radioData.transmitterData.rxNum++;
+        else radioData.transmitterData.rxNum = 0;
+        break;
+    case POWER_LEVEL:
+        if(radioData.transmitterData.powerValue == radioData.POWER_VALUE_HIGH) radioData.transmitterData.powerValue = radioData.POWER_VALUE_LOW;
+        else radioData.transmitterData.powerValue = radioData.POWER_VALUE_HIGH;
+        break;
+    case RANGE_CHECK:
+        radioData.transmitterData.rangeCheck = !radioData.transmitterData.rangeCheck;
+        break; 
     case NUMBER_OF_MENUENTRIES:
         return true;
         break;
     default:
         break;
     }
-    return false;
+    return false; //TODO alle return umbiegen, dass error und ok richtig sind
 }
 
 void Transmitter::center()
@@ -129,29 +163,41 @@ void Transmitter::doFunction()
     // Calculate Channel Data
     for(int i = 0; i < 16*11; i++){
         if(radioData.channelData.channel[i/11] & (0x01 << (i % 11))){
-            radioData.transmitterData.txData[4+i/8] |= (0x01 << (i % 8));
+            txData[4+i/8] |= (0x01 << (i % 8));
         }
         else{
-            radioData.transmitterData.txData[4+i/8] &= ~(0x01 << (i % 8));
+            txData[4+i/8] &= ~(0x01 << (i % 8));
         }
     }
 
     // Set Protocol
-    radioData.transmitterData.txData[1] &= 0xE0;
-    radioData.transmitterData.txData[1] |= radioData.protocolList[radioData.transmitterData.selectedProtocol].value & 0x1F;
+    txData[1] &= 0xD0;
+    txData[1] |= (radioData.transmitterData.rangeCheck << 5) & 0x20;
+
+    // Set Range Check
+    txData[1] &= 0xE0;
+    txData[1] |= radioData.protocolList[radioData.transmitterData.selectedProtocol].value & 0x1F;
 
     // Set Sub Protocol
-    radioData.transmitterData.txData[2] &= 0x8F;
-    radioData.transmitterData.txData[2] |= (radioData.protocolList[radioData.transmitterData.selectedProtocol].subProtocolList[radioData.transmitterData.selectedSubProtocol].value << 4) & 0x70;    
+    txData[2] &= 0x8F;
+    txData[2] |= (radioData.protocolList[radioData.transmitterData.selectedProtocol].subProtocolList[radioData.transmitterData.selectedSubProtocol].value << 4) & 0x70;    
+
+    // Set RxNum
+    txData[2] &= 0xF0;
+    txData[2] |= radioData.transmitterData.rxNum & 0x0F;    
+
+    // Set Power
+    txData[2] &= 0x70;
+    txData[2] |= (radioData.transmitterData.powerValue) << 7 & 0x80;   
 
     // Read binding progress
     if(radioData.transmitterData.bindingState == radioData.BINDED || radioData.transmitterData.bindingState == radioData.BINDING_FAILED){}
     else{
         if(Serial2.find(search,3))
         {
-            if(0!=Serial2.readBytes(radioData.transmitterData.rxData,10))
+            if(0!=Serial2.readBytes(rxData,10))
             {
-                if((radioData.transmitterData.rxData[1] & 0x08) == 0x08) rxBindFlag = true;
+                if((rxData[1] & 0x08) == 0x08) rxBindFlag = true;
                 else rxBindFlag = false;
             }
         }
@@ -167,24 +213,24 @@ void Transmitter::doFunction()
             Serial2.flush();
             break;
         case radioData.BINDING_STARTED:
-            radioData.transmitterData.txData[1] |= 0x80;
+            txData[1] |= 0x80;
             if(rxBindFlag == true) radioData.transmitterData.bindingState = radioData.BINDING;
             if(bindTimeout < millis()) radioData.transmitterData.bindingState = radioData.BINDING_FAILED;
             break;
         case radioData.BINDING:
-            radioData.transmitterData.txData[1] |= 0x80;
+            txData[1] |= 0x80;
             if(rxBindFlag == false) radioData.transmitterData.bindingState = radioData.BINDING_FINISHED;
             if(bindTimeout < millis()) radioData.transmitterData.bindingState = radioData.BINDING_FAILED;
             break;
         case radioData.BINDING_FINISHED:
-            radioData.transmitterData.txData[1] &= ~0x80;
+            txData[1] &= ~0x80;
             if(bindTimeout < millis()) radioData.transmitterData.bindingState = radioData.BINDED;
             break;  
         default:
             break;
     }
 
-    Serial1.write(radioData.transmitterData.txData,27);
+    Serial1.write(txData,27);
 }
 
 #endif

@@ -17,7 +17,7 @@ protected:
     int posW = 20;
     int incH = 20;
     void drawMenuPointer(int selectedMenuEntry, int numberOfMenuEntries);
-    void limitValue(double& value);
+    void limitValue(float& value);
 public:
     RadioClass(TFT_eSPI& newTft, RadioData& newRadioData): tft(newTft), radioData(newRadioData){}
     virtual void doFunction();
@@ -31,7 +31,7 @@ public:
     virtual void center();
 };
 
-void RadioClass::limitValue(double& value)
+void RadioClass::limitValue(float& value)
 {
     if(value > 1) value = 1;
     if(value < -1) value = -1;

@@ -16,9 +16,14 @@ class AnalogToDigital : public RadioClass
 private:
     enum MenuEntries{INV_UP_DOWN, INV_LEFT_RIGHT, INV_SLIDER, LIM_UP_DOWN, LIM_LEFT_RIGHT, LIM_SLIDER, NUMBER_OF_MENUENTRIES};
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
-    void getMenuButton(const double& value, const double& limit, const double& tolerance, bool& button, bool& buttonEvent);
-    double analogToDigital(double value, const RadioData::AnalogToDigitalData::StickLimit& limit);
-    void getLongPress(bool& longPressEvent, unsigned long& startTimeMs, const bool& state, const bool& event);
+    unsigned int startPressTimeUpMs = 0;
+    unsigned int startPressTimeDownMs = 0;
+    unsigned int startPressTimeLeftMs = 0;
+    unsigned int startPressTimeRightMs = 0;
+    unsigned int startPressTimeCenterMs = 0;
+    void getMenuButton(const float& value, const float& limit, const float& tolerance, bool& button, bool& buttonEvent);
+    float analogToDigital(float value, const RadioData::AnalogToDigitalData::StickLimit& limit);
+    void getLongPress(bool& longPressEvent, unsigned int& startTimeMs, const bool& state, const bool& event);
 public:
     AnalogToDigital(TFT_eSPI& newTft, RadioData& newRadioData);
     void doFunction();
@@ -198,11 +203,11 @@ void AnalogToDigital::doFunction()
     getMenuButton(radioData.analogData.menu, radioData.analogToDigitalData.menuButtonLimit.center, radioData.analogToDigitalData.menuButtonTolerance, radioData.digitalData.center, radioData.digitalData.centerEvent);
     radioData.digitalData.sideSwitch = digitalRead(PIN_SWITCH);
 
-    getLongPress(radioData.digitalData.upLongPressEvent,radioData.analogToDigitalData.startPressTimeUpMs,radioData.digitalData.up,radioData.digitalData.upEvent);
-    getLongPress(radioData.digitalData.downLongPressEvent,radioData.analogToDigitalData.startPressTimeDownMs,radioData.digitalData.down,radioData.digitalData.downEvent);
-    getLongPress(radioData.digitalData.leftLongPressEvent,radioData.analogToDigitalData.startPressTimeLeftMs,radioData.digitalData.left,radioData.digitalData.leftEvent);
-    getLongPress(radioData.digitalData.rightLongPressEvent,radioData.analogToDigitalData.startPressTimeRightMs,radioData.digitalData.right,radioData.digitalData.rightEvent);
-    getLongPress(radioData.digitalData.centerLongPressEvent,radioData.analogToDigitalData.startPressTimeCenterMs,radioData.digitalData.center,radioData.digitalData.centerEvent);
+    getLongPress(radioData.digitalData.upLongPressEvent,startPressTimeUpMs,radioData.digitalData.up,radioData.digitalData.upEvent);
+    getLongPress(radioData.digitalData.downLongPressEvent,startPressTimeDownMs,radioData.digitalData.down,radioData.digitalData.downEvent);
+    getLongPress(radioData.digitalData.leftLongPressEvent,startPressTimeLeftMs,radioData.digitalData.left,radioData.digitalData.leftEvent);
+    getLongPress(radioData.digitalData.rightLongPressEvent,startPressTimeRightMs,radioData.digitalData.right,radioData.digitalData.rightEvent);
+    getLongPress(radioData.digitalData.centerLongPressEvent,startPressTimeCenterMs,radioData.digitalData.center,radioData.digitalData.centerEvent);
 }
 
 void AnalogToDigital::showValue()
@@ -227,7 +232,7 @@ void AnalogToDigital::showValue()
     tft.println(radioData.digitalData.center);
 }
 
-void AnalogToDigital::getMenuButton(const double& value, const double& limit, const double& tolerance, bool& button, bool& buttonEvent)
+void AnalogToDigital::getMenuButton(const float& value, const float& limit, const float& tolerance, bool& button, bool& buttonEvent)
 {
     bool newButtonState;
     if(value <= limit + tolerance && value >= limit - tolerance) newButtonState = true;
@@ -239,13 +244,13 @@ void AnalogToDigital::getMenuButton(const double& value, const double& limit, co
     button = newButtonState;
 }
 
-void AnalogToDigital::getLongPress(bool& longPressEvent, unsigned long& startTimeMs, const bool& state, const bool& event)
+void AnalogToDigital::getLongPress(bool& longPressEvent, unsigned int& startTimeMs, const bool& state, const bool& event)
 {
     if(event == true) 
     {
         startTimeMs = millis();
     }
-    if(state == true && ((double)millis() - (double)startTimeMs) >= radioData.analogToDigitalData.longPressDurationMs)
+    if(state == true && ((float)millis() - (float)startTimeMs) >= radioData.analogToDigitalData.longPressDurationMs)
     {
         longPressEvent = true;
         startTimeMs = millis() + 60000;       
@@ -256,11 +261,11 @@ void AnalogToDigital::getLongPress(bool& longPressEvent, unsigned long& startTim
     }
 }
 
-double AnalogToDigital::analogToDigital(double value, const RadioData::AnalogToDigitalData::StickLimit& limit)
+float AnalogToDigital::analogToDigital(float value, const RadioData::AnalogToDigitalData::StickLimit& limit)
 {
     // Umwandeln aller Werte in +/- Werte
-    double max = limit.max - limit.center;
-    double min = limit.min - limit.center;
+    float max = limit.max - limit.center;
+    float min = limit.min - limit.center;
     value = value - limit.center;
     // Umwandeln von analog Bereich zu +/- 1
     if(value >= 0){
