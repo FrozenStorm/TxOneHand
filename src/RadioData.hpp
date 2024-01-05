@@ -3,7 +3,6 @@
 
 #include <EEPROM.h>
 #include <list.h>
-#include <string.h>
 #include "Protocol.hpp"
 
 #define MAX_NUMBER_OF_MODELS 4
@@ -17,6 +16,8 @@ class RadioData
 private:
     int eepromSizeModel = 0;
     int eepromSizeGobal = 0;
+    char modelNameString[MODEL_NAME_LENGTH+1] = "123456789_12";
+    void setDefaultValues(void);
 public:
     struct AnalogToDigitalData
     {
@@ -591,48 +592,51 @@ public:
     };
     ModelData modelData;
 
-    void setDefaultValues();
-
     void storeData();
     void loadData();
 
     void storeSelectedModel();
     void loadSelectedModel();
+
+    char* getModelName(void);
     
     RadioData(/* args */);
     ~RadioData();
 };
 
+char* RadioData::getModelName(void)
+{
+    int i;
+    bool firstCharacterFound = false;
+    for(i=MODEL_NAME_LENGTH-1;i>=0;i--)
+    {
+        if(modelData.modelName[i] == 0 && firstCharacterFound == false && i != 0){
+            modelNameString[i] = '\n';
+        }
+        else{
+            firstCharacterFound = true;
+            modelNameString[i] = modelNameCharacters[modelData.modelName[i]];
+        }
+    }
+    return modelNameString;
+}
+
 RadioData::RadioData(/* args */)
 {
     setDefaultValues();
 
-    float f=0;
-    double d=0;
-    Serial.printf("float = %d\n",sizeof(f));
-    Serial.printf("double = %d\n",sizeof(d));
     eepromSizeModel = 0;
     eepromSizeModel += sizeof(AnalogToDigitalData);
-    Serial.printf("AnalogToDigitalData = %d\n",sizeof(AnalogToDigitalData));
     eepromSizeModel += sizeof(ExpoData);
-    Serial.printf("ExpoData = %d\n",sizeof(ExpoData));
     eepromSizeModel += sizeof(DualRateData);
-    Serial.printf("DualRateData = %d\n",sizeof(DualRateData));
     eepromSizeModel += sizeof(TrimData);
-    Serial.printf("TrimData = %d\n",sizeof(TrimData));
     eepromSizeModel += sizeof(FunctionToChannelData);
-    Serial.printf("FunctionToChannelData = %d\n",sizeof(FunctionToChannelData));
     eepromSizeModel += sizeof(MixerData);
-    Serial.printf("MixerData = %d\n",sizeof(MixerData));
     eepromSizeModel += sizeof(TransmitterData);
-    Serial.printf("TransmitterData = %d\n",sizeof(TransmitterData));
     eepromSizeModel += sizeof(ModelData);
-    Serial.printf("ModelData = %d\n",sizeof(ModelData));
     eepromSizeModel = eepromSizeModel * MAX_NUMBER_OF_MODELS;
-    Serial.printf("eepromSizeModel = %d\n",eepromSizeModel);
 
     eepromSizeGobal = sizeof(selectedModel);
-    Serial.printf("eepromSizeGobal = %d\n",eepromSizeGobal);
 }
 
 RadioData::~RadioData()
@@ -696,31 +700,19 @@ void RadioData::storeData()
 {
     int address = eepromSizeModel / MAX_NUMBER_OF_MODELS * selectedModel + eepromSizeGobal;
 
-
-    // TODO REMOVE
-    eepromSizeModel = 0;
-    eepromSizeModel += sizeof(AnalogToDigitalData);
+    // TODO REMOVE EEPROM SIZE PRINT
+    /*
     Serial.printf("AnalogToDigitalData = %d\n",sizeof(AnalogToDigitalData));
-    eepromSizeModel += sizeof(ExpoData);
     Serial.printf("ExpoData = %d\n",sizeof(ExpoData));
-    eepromSizeModel += sizeof(DualRateData);
     Serial.printf("DualRateData = %d\n",sizeof(DualRateData));
-    eepromSizeModel += sizeof(TrimData);
     Serial.printf("TrimData = %d\n",sizeof(TrimData));
-    eepromSizeModel += sizeof(FunctionToChannelData);
     Serial.printf("FunctionToChannelData = %d\n",sizeof(FunctionToChannelData));
-    eepromSizeModel += sizeof(MixerData);
     Serial.printf("MixerData = %d\n",sizeof(MixerData));
-    eepromSizeModel += sizeof(TransmitterData);
     Serial.printf("TransmitterData = %d\n",sizeof(TransmitterData));
-    eepromSizeModel += sizeof(ModelData);
     Serial.printf("ModelData = %d\n",sizeof(ModelData));
-    eepromSizeModel = eepromSizeModel * MAX_NUMBER_OF_MODELS;
     Serial.printf("eepromSizeModel = %d\n",eepromSizeModel);
-
-    eepromSizeGobal = sizeof(selectedModel);
     Serial.printf("eepromSizeGobal = %d\n",eepromSizeGobal);
-
+    */
 
     if(EEPROM.begin(eepromSizeModel + eepromSizeGobal) == true){
         EEPROM.put(address,analogToDigitalData);

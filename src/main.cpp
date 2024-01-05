@@ -114,8 +114,8 @@ void setup() {
   // gnss.init(Serial2, 9600);
 
   //EEPROM
-  radioData.loadData();
   radioData.loadSelectedModel();
+  radioData.loadData();
   
   // Loop Delay
   targetTime = millis() + 1000; 

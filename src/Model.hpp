@@ -11,6 +11,7 @@ private:
 
     unsigned int modelNameInputPosition = 0;
     unsigned int modelNameInputCharacter = 0;
+
 public:
     Model(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
     void doFunction();
@@ -34,17 +35,10 @@ const char * Model::getTitle()
 
 void Model::showMenu()
 {
-    char modelNameString[MODEL_NAME_LENGTH+1] = "123456789_12";
-
     sprintf(myString,"Model = %-2d\n",radioData.selectedModel);
     tft.drawString(myString, posW, posH+incH*0);
 
-    for(int i=0;i<MODEL_NAME_LENGTH;i++)
-    {
-        modelNameString[i] = radioData.modelNameCharacters[radioData.modelData.modelName[i]];
-    }
-
-    sprintf(myString,"Name = %s  \n",modelNameString); // TODO länge abhängig machen von define
+    sprintf(myString,"Name = %-12s  \n",radioData.getModelName()); // TODO länge abhängig machen von define
     tft.drawString(myString, posW, posH+incH*1);
 
     drawMenuPointer(selectedMenuEntry,NUMBER_OF_MENUENTRIES);

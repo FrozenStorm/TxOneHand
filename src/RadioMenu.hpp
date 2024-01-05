@@ -52,9 +52,12 @@ void RadioMenu::showMenu()
     tft.setTextSize(1);
     tft.drawString("TxOneHand by Z-Craft",tft.width()/2, tft.height()/2-20,2);
 
-    tft.setTextDatum(TL_DATUM);
+    tft.setTextDatum(TR_DATUM);
     sprintf(myString,"%1.1fV",radioData.analogData.battery);
-    tft.drawString(myString,0,0,2);
+    tft.drawString(myString,tft.width(),0,2);    
+
+    tft.setTextDatum(TL_DATUM);
+    tft.drawString(radioData.getModelName(),0,0,2);
 
     tft.setCursor(0, tft.height()/2, 2);
     tft.println();
