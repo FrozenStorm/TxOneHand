@@ -145,7 +145,7 @@ public:
     
     struct ChannelData
     {
-        int channel[16] = {0};
+        volatile int channel[16] = {0};
     };
     ChannelData channelData;
 

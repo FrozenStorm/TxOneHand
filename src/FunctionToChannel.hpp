@@ -81,10 +81,12 @@ void FunctionToChannel::doFunction()
         }
         if(radioData.functionToChannelData.invertChannel[i] == true) value = -value;
 
-        radioData.channelData.channel[i] = (value + 1) * 1023;
+        value = (value + 1) * 1023;
 
-        if(radioData.channelData.channel[i] > radioData.functionToChannelData.upperLimitChannel[i]) radioData.channelData.channel[i] = radioData.functionToChannelData.upperLimitChannel[i];
-        if(radioData.channelData.channel[i] < radioData.functionToChannelData.lowerLimitChannel[i]) radioData.channelData.channel[i] = radioData.functionToChannelData.lowerLimitChannel[i];
+        if(value > radioData.functionToChannelData.upperLimitChannel[i]) value = radioData.functionToChannelData.upperLimitChannel[i];
+        if(value < radioData.functionToChannelData.lowerLimitChannel[i]) value = radioData.functionToChannelData.lowerLimitChannel[i];
+
+        radioData.channelData.channel[i] = value; // Nur eine Zuweisung damit es Interrupt sicher ist
     }
 }
 

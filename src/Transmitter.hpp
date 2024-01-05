@@ -9,11 +9,14 @@ private:
     enum MenuEntries{BIND, PROTOCOL, SUBPROTOCOL, RX_NUMBER, POWER_LEVEL, RANGE_CHECK, NUMBER_OF_MENUENTRIES};
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
 
+    uint32_t bindTimeout = 0;
+    bool rxBindFlag = false;
     unsigned char txData[27] = {0x55,0x06,0x20,0x07,0x00,0x24,0x20,0x07,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x00,0x04,0x20,0x00,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x08}; // TODO wiso muss hier unsigend char stehen, damit das init mit 0xE3 funktioniert
     unsigned char rxData[28] = {0x4D,0x50,0x01,0x18,0x47,0x01,0x03,0x03,0x14,0xE4,0x46,0x21,0x44,0x53,0x4D,0x00,0x4F,0x4D,0x50,0x76,0x58,0x20,0x31,0x46,0x00,0x00,0x00,0x00};
 public:
     Transmitter(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
     void doFunction();
+    bool sendTx(void *);
 
     void showMenu();
     void showValue();
@@ -156,10 +159,50 @@ void Transmitter::center()
 
 void Transmitter::doFunction()
 {
-    static uint32_t bindTimeout = 0;
     const char search[3] = {0x4D,0x50,0x01};
-    static bool rxBindFlag = false;
 
+    // Read binding progress
+    if(radioData.transmitterData.bindingState == radioData.BINDED || radioData.transmitterData.bindingState == radioData.BINDING_FAILED){}
+    else{
+        if(Serial2.find(search,3))
+        {
+            if(0!=Serial2.readBytes(rxData,10))
+            {
+                if((rxData[1] & 0x08) == 0x08) rxBindFlag = true;
+                else rxBindFlag = false;
+            }
+        }
+    }
+
+    // Set binding state
+    switch (radioData.transmitterData.bindingState)
+    {
+        case radioData.BINDED:
+        case radioData.BINDING_FAILED:
+            bindTimeout = millis() + 15000;
+            rxBindFlag = false;
+            Serial2.flush();
+            break;
+        case radioData.BINDING_STARTED:
+            if(rxBindFlag == true) radioData.transmitterData.bindingState = radioData.BINDING;
+            if(bindTimeout < millis()) radioData.transmitterData.bindingState = radioData.BINDING_FAILED;
+            break;
+        case radioData.BINDING:
+            if(rxBindFlag == false) radioData.transmitterData.bindingState = radioData.BINDING_FINISHED;
+            if(bindTimeout < millis()) radioData.transmitterData.bindingState = radioData.BINDING_FAILED;
+            break;
+        case radioData.BINDING_FINISHED:
+            if(bindTimeout < millis()) radioData.transmitterData.bindingState = radioData.BINDED;
+            break;  
+        default:
+            break;
+    }
+
+    sendTx(NULL);
+}
+
+bool Transmitter::sendTx(void *)
+{
     // Calculate Channel Data
     for(int i = 0; i < 16*11; i++){
         if(radioData.channelData.channel[i/11] & (0x01 << (i % 11))){
@@ -190,47 +233,28 @@ void Transmitter::doFunction()
     txData[2] &= 0x70;
     txData[2] |= (radioData.transmitterData.powerValue) << 7 & 0x80;   
 
-    // Read binding progress
-    if(radioData.transmitterData.bindingState == radioData.BINDED || radioData.transmitterData.bindingState == radioData.BINDING_FAILED){}
-    else{
-        if(Serial2.find(search,3))
-        {
-            if(0!=Serial2.readBytes(rxData,10))
-            {
-                if((rxData[1] & 0x08) == 0x08) rxBindFlag = true;
-                else rxBindFlag = false;
-            }
-        }
-    }
-
     // Set binding bit
     switch (radioData.transmitterData.bindingState)
     {
         case radioData.BINDED:
         case radioData.BINDING_FAILED:
-            bindTimeout = millis() + 15000;
-            rxBindFlag = false;
-            Serial2.flush();
             break;
         case radioData.BINDING_STARTED:
             txData[1] |= 0x80;
-            if(rxBindFlag == true) radioData.transmitterData.bindingState = radioData.BINDING;
-            if(bindTimeout < millis()) radioData.transmitterData.bindingState = radioData.BINDING_FAILED;
             break;
         case radioData.BINDING:
             txData[1] |= 0x80;
-            if(rxBindFlag == false) radioData.transmitterData.bindingState = radioData.BINDING_FINISHED;
-            if(bindTimeout < millis()) radioData.transmitterData.bindingState = radioData.BINDING_FAILED;
             break;
         case radioData.BINDING_FINISHED:
             txData[1] &= ~0x80;
-            if(bindTimeout < millis()) radioData.transmitterData.bindingState = radioData.BINDED;
             break;  
         default:
             break;
     }
 
+    // Send Data
     Serial1.write(txData,27);
+    return true;
 }
 
 #endif
