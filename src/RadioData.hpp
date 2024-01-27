@@ -44,6 +44,11 @@ public:
         int longPressDurationMs;
     };
     AnalogToDigitalData analogToDigitalData;
+
+    struct SensorToDigitalData{
+        float seaLevelPressure;
+    };
+    SensorToDigitalData sensorToDigitalData;
     
 
     struct ExpoData{
@@ -132,6 +137,11 @@ public:
         bool upLongPressEvent = 0;
         bool downLongPressEvent = 0;
         bool centerLongPressEvent = 0;
+
+        float altitude = 0;
+        float heading = 0;
+        float pitch = 0;
+        float roll = 0;
     };
     DigitalData digitalData;
 
@@ -652,6 +662,9 @@ void RadioData::setDefaultValues()
         .menuButtonLimit = {.up = 1.67, .down = 0.53, .left = 0.38, .right = 1.38, .center = 0.96},
         .menuButtonTolerance = 0.1,
         .longPressDurationMs = 600
+    };
+    sensorToDigitalData = {
+        .seaLevelPressure = 1013.25
     };
     expoData = {
         .roll = 0.3,

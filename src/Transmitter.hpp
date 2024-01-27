@@ -3,6 +3,9 @@
 
 #include "RadioClass.hpp"
 
+#define PIN_MULTI_TX          43
+#define PIN_MULTI_RX          44
+
 class Transmitter : public RadioClass
 {
 private:
@@ -14,7 +17,7 @@ private:
     unsigned char txData[27] = {0x55,0x06,0x20,0x07,0x00,0x24,0x20,0x07,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x00,0x04,0x20,0x00,0x01,0x08,0x40,0x00,0x02,0x10,0x80,0x08}; // TODO wiso muss hier unsigend char stehen, damit das init mit 0xE3 funktioniert
     unsigned char rxData[28] = {0x4D,0x50,0x01,0x18,0x47,0x01,0x03,0x03,0x14,0xE4,0x46,0x21,0x44,0x53,0x4D,0x00,0x4F,0x4D,0x50,0x76,0x58,0x20,0x31,0x46,0x00,0x00,0x00,0x00};
 public:
-    Transmitter(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
+    Transmitter(TFT_eSPI& newTft, RadioData& newRadioData);
     void doFunction();
     bool sendTx(void *);
 
@@ -27,6 +30,14 @@ public:
     bool right();
     void center();
 };
+
+Transmitter::Transmitter(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData)
+{
+  // UART
+  Serial1.begin(100000, SERIAL_8E2, -1, PIN_MULTI_TX);
+  Serial2.begin(100000, SERIAL_8E2, PIN_MULTI_RX, -1, true);
+  Serial2.setTimeout(4);
+}
 
 
 void Transmitter::showValue(){};
