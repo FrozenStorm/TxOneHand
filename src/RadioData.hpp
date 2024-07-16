@@ -634,6 +634,7 @@ char* RadioData::getModelName(void)
 RadioData::RadioData(/* args */)
 {
     setDefaultValues();
+    selectedModel = 0;
 
     eepromSizeModel = 0;
     eepromSizeModel += sizeof(AnalogToDigitalData);
@@ -656,9 +657,9 @@ RadioData::~RadioData()
 void RadioData::setDefaultValues()
 {
     analogToDigitalData = {
-        .stickLimitUpDown = {.min = 0.01, .max = 3.01, .center = 1.34, .invert = true},
-        .stickLimitLeftRight = {.min = 0.13, .max = 2.93, .center = 1.5, .invert = false},
-        .stickLimitSlider = {.min = 0.25, .max = 1.45, .center = 0.85, .invert = true},
+        .stickLimitUpDown = {.min = 0.16, .max = 2.82, .center = 1.34, .invert = true},
+        .stickLimitLeftRight = {.min = 0.21, .max = 2.90, .center = 1.49, .invert = false},
+        .stickLimitSlider = {.min = 0.0, .max = 1.32, .center = 0.65, .invert = true},
         .menuButtonLimit = {.up = 1.67, .down = 0.53, .left = 0.38, .right = 1.38, .center = 0.96},
         .menuButtonTolerance = 0.1,
         .longPressDurationMs = 600
@@ -704,7 +705,7 @@ void RadioData::setDefaultValues()
         .powerValue = POWER_VALUE_HIGH,
     };
     modelData = {
-        .modelName = {0,0,0,0,0,0,0,0,0,0,0,0},
+        .modelName = {2,13,22,13,2,0,0,0,0,0,0,0},
         .crc = CRC_VALUE
     };
 }

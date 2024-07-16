@@ -92,7 +92,7 @@ void loop() {
   if(deltaT > maxHold) maxHold = deltaT;
   sprintf(myString,"%3d/%dms",deltaT, maxHold);
   tft.setTextDatum(TR_DATUM);
-  tft.drawString(myString,tft.width(),15,2);    
+  //tft.drawString(myString,tft.width(),15,2);    
   
   if (targetTime < millis()) {
     targetTime += 100;
