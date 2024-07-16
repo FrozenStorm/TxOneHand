@@ -3,14 +3,16 @@
 
 #include "RadioClass.hpp"
 
-//#include <Wire.h>
-//#include <Adafruit_Sensor.h>
-//#include <Adafruit_LSM303_U.h>
-//#include <Adafruit_BMP085_U.h>
-//#include <Adafruit_L3GD20_U.h>
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
 //#include <Adafruit_10DOF.h>
+//#include <Adafruit_LSM303_U.h>
+//#include <Adafruit_HMC5883_U.h>
+//#include <Adafruit_MPU6050.h>
+#include <Adafruit_BMP085.h>
 
-// https://github.com/kriswiner/MPU6050HMC5883AHRS/blob/master/MPU6050HMC5883AHRS.ino
+#define PIN_ACCELEROMETER_SCL 17
+#define PIN_ACCELEROMETER_SDA 18
 
 
 class SensorToDigital : public RadioClass
@@ -18,24 +20,18 @@ class SensorToDigital : public RadioClass
 private:
     enum MenuEntries{PREASURE_AT_SEALEVEL, NUMBER_OF_MENUENTRIES};
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
-    //Adafruit_10DOF                    dof;
-    //Adafruit_LSM303_Accel_Unified     accel;
-    //Adafruit_LSM303_Mag_Unified       mag;
-    //Adafruit_BMP085_Unified           bmp;
-   // Adafruit_MPU6050&     accel;
+    //Adafruit_10DOF                    dof   = Adafruit_10DOF();
+    //Adafruit_LSM303_Accel_Unified     accel = Adafruit_LSM303_Accel_Unified(30301);
+    //Adafruit_LSM303_Mag_Unified       mag   = Adafruit_LSM303_Mag_Unified(30302);
+    Adafruit_BMP085_Unified           bmp   = Adafruit_BMP085_Unified(18001);
+    //Adafruit_MPU6050     accel;
     //Adafruit_HMC5883_Unified&    mag;
     //Adafruit_Simple_AHRS&              ahrs;
     //Adafruit_BMP085_Unified&           bmp;
     float temperature;
     
 public:
-    SensorToDigital(TFT_eSPI& newTft, RadioData& newRadioData
-                    //Adafruit_MPU6050& newMpu,
-                    //Adafruit_HMC5883_Unified& newMag,
-                    //Adafruit_BMP085_Unified& newBmp
-                    ): 
-                    //accel(newMpu), mag(newMag), bmp(newBmp), 
-                    RadioClass(newTft, newRadioData){}
+    SensorToDigital(TFT_eSPI& newTft, RadioData& newRadioData);
     void doFunction();
     void showValue();
 
@@ -47,6 +43,21 @@ public:
     bool right();
     void center();
 };
+
+SensorToDigital::SensorToDigital(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData)
+{
+  // I2C 10DOF Sensor
+  Wire.setPins(PIN_ACCELEROMETER_SDA,PIN_ACCELEROMETER_SCL);
+  Wire.begin();
+
+
+  if(!bmp.begin())
+  {
+    /* There was a problem detecting the BMP180 ... check your connections */
+    //Serial.println("Ooops, no BMP180 detected ... Check your wiring!");
+    //while(1);
+  }
+}
 
 void SensorToDigital::showMenu()
 {
@@ -65,8 +76,8 @@ void SensorToDigital::showMenu()
     sprintf(myString,"Altitude = %4.2fm\n", radioData.digitalData.altitude);
     tft.drawString(myString, posW, posH+incH*4);
 
-    //sprintf(myString,"Temperature = %2.2f\n", temperature);
-    //tft.drawString(myString, posW, posH+incH*5);
+    sprintf(myString,"Temperature = %2.2f\n", temperature);
+    tft.drawString(myString, posW, posH+incH*5);
 
     //sensor_t sensor;
     //accel.get(&sensor);
@@ -132,12 +143,21 @@ void SensorToDigital::center()
 
 void SensorToDigital::doFunction()
 {
+    sensors_event_t bmp_event;
+
+    bmp.getEvent(&bmp_event);
+    bmp.getTemperature(&temperature);
+    radioData.digitalData.altitude =  bmp.pressureToAltitude(
+                                        radioData.sensorToDigitalData.seaLevelPressure,
+                                        bmp_event.pressure,
+                                        temperature);
+                                        
 /*    sensors_event_t accel_event;
     sensors_event_t mag_event;
     sensors_event_t gyro_event;
     sensors_event_t temperature_event;
     sensors_vec_t   orientation;
-    sensors_event_t bmp_event;
+    
   
     accel.getEvent(&accel_event, &gyro_event, &temperature_event);
     mag.getEvent(&mag_event);
@@ -149,14 +169,8 @@ void SensorToDigital::doFunction()
         radioData.digitalData.pitch = orientation.pitch;
         radioData.digitalData.heading = orientation.heading;
     //} 
-
-    bmp.getEvent(&bmp_event);
-    bmp.getTemperature(&temperature);
-    radioData.digitalData.altitude =  bmp.pressureToAltitude(
-                                        radioData.sensorToDigitalData.seaLevelPressure,
-                                        bmp_event.pressure,
-                                        temperature);
-                                        */
+*/
+    
 }
 
 void SensorToDigital::showValue()

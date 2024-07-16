@@ -110,7 +110,7 @@ bool FunctionToChannel::left()
     {
     case CHANNEL:
         selectedMenuChannel--;
-        if(selectedMenuChannel<0) selectedMenuChannel = sizeof(radioData.channelData.channel)/sizeof(int)-1;
+        if(selectedMenuChannel<0) selectedMenuChannel = SUPPORTED_CHANNELS-1;
         break;
     case FUNCTION:
         nextValue = static_cast<int>(radioData.functionToChannelData.functionOnChannel[selectedMenuChannel]);
@@ -146,7 +146,7 @@ bool FunctionToChannel::right()
     {
     case CHANNEL:
         selectedMenuChannel++;
-        if(selectedMenuChannel>=sizeof(radioData.channelData.channel)/sizeof(int)) selectedMenuChannel = 0;
+        if(selectedMenuChannel>=SUPPORTED_CHANNELS) selectedMenuChannel = 0;
         break;
     case FUNCTION:
         nextValue = static_cast<int>(radioData.functionToChannelData.functionOnChannel[selectedMenuChannel]);

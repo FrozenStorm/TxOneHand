@@ -3,6 +3,7 @@
 #include <SPI.h>
 #include <TFT_eSPI.h>
 #include <Wire.h>
+//#include "SensorToDigital.hpp"
 #include "AnalogToDigital.hpp"
 #include "DigitalToFunction.hpp"
 #include "Expo.hpp"
@@ -30,6 +31,7 @@
 TFT_eSPI                          tft = TFT_eSPI(); 
 uint32_t                          targetTime = 0;         
 RadioData                         radioData = RadioData();
+//SensorToDigital                   sensorToDigital = SensorToDigital(tft, radioData);
 AnalogToDigital                   analogToDigital = AnalogToDigital(tft, radioData);
 DigitalToFunction                 digitalToFunction = DigitalToFunction(tft, radioData);
 Expo                              expo = Expo(tft, radioData);
@@ -50,6 +52,7 @@ void setup() {
   // Menu
   radioMenu.addEntry(&model);
   radioMenu.addEntry(&transmitter);
+  //radioMenu.addEntry(&sensorToDigital);
   radioMenu.addEntry(&analogToDigital);
   radioMenu.addEntry(&expo);
   radioMenu.addEntry(&dualRate);
@@ -72,8 +75,8 @@ void setup() {
   tft.setTextSize(1);
 
   //EEPROM
-  radioData.loadSelectedModel();
-  radioData.loadData();
+  // radioData.loadSelectedModel();
+  // radioData.loadData();
   
   // Loop Delay
   targetTime = millis() + 1000; 
@@ -98,6 +101,7 @@ void loop() {
     targetTime += 100;
     radioMenu.showMenu();
   }
+  //sensorToDigital.doFunction();
   analogToDigital.doFunction();
   radioMenu.processInputs();
   digitalToFunction.doFunction();
