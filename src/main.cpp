@@ -21,6 +21,7 @@
 #define PIN_GPS_RX            13
 
 #define PIN_POWER_EN          15
+#define PIN_LCD_BL            38
 
 #define DISP_WIDTH            170
 #define DISP_HEIGHT           320
@@ -55,6 +56,13 @@ void setup() {
   radioMenu.addEntry(&mixer);
   radioMenu.addEntry(&functionToChannel);  
 
+  // Power Enable (for LCD Backlight without VBUS from USB)
+  pinMode(PIN_POWER_EN,OUTPUT);
+  digitalWrite(PIN_POWER_EN,HIGH);
+  //ledcSetup(0, 10000, 8);
+  //ledcAttachPin(PIN_LCD_BL, 0);
+  //ledcWrite(0, 10); // 0..255 Backlight intensity
+
   // Display
   tft.init();
   tft.setRotation(0);
@@ -62,10 +70,6 @@ void setup() {
   tft.setCursor(0, 0, 2);
   tft.setTextColor(TFT_WHITE,TFT_BLACK,true);  
   tft.setTextSize(1);
-
-  // Power Enable (for LCD Backlight without VBUS from USB)
-  pinMode(PIN_POWER_EN,OUTPUT);
-  digitalWrite(PIN_POWER_EN,HIGH);
 
   //EEPROM
   radioData.loadSelectedModel();
