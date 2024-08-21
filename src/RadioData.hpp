@@ -5,7 +5,7 @@
 #include <list.h>
 #include "Protocol.hpp"
 
-#define MAX_NUMBER_OF_MODELS 4
+#define MAX_NUMBER_OF_MODELS 3
 #define MODEL_NAME_LENGTH 12
 #define CHARACTER_SET_LENGTH 38
 #define CRC_VALUE 42
@@ -812,6 +812,7 @@ void RadioData::loadSelectedModel()
         EEPROM.get(0, selectedModel);
     }
     EEPROM.end();
+    if(selectedModel > MAX_NUMBER_OF_MODELS - 1) selectedModel = 0;
 }
 
 #endif
