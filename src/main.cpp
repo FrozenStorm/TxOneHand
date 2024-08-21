@@ -26,6 +26,8 @@
 #define DISP_WIDTH            170
 #define DISP_HEIGHT           320
 
+#define LOOP_DELAY_MS         20
+
 /* -------------------- Variable -------------------------------------------------------------------------------*/
 TFT_eSPI                          tft = TFT_eSPI(); 
 uint32_t                          targetTime = 0;         
@@ -76,12 +78,13 @@ void setup() {
   radioData.loadData();
   
   // Loop Delay
-  targetTime = millis() + 1000; 
+  targetTime = millis() + LOOP_DELAY_MS; 
 
 }
 
 /* -------------------- Main -----------------------------------------------------------------------------------*/
 void loop() {
+  /*
   static uint32_t lastCall = millis();
   char myString[20];
   uint32_t deltaT = 0;
@@ -93,18 +96,19 @@ void loop() {
   sprintf(myString,"%3d/%dms",deltaT, maxHold);
   tft.setTextDatum(TR_DATUM);
   //tft.drawString(myString,tft.width(),15,2);    
+  */
   
   if (targetTime < millis()) {
-    targetTime += 100;
+    targetTime += LOOP_DELAY_MS;
     radioMenu.showMenu();
+    analogToDigital.doFunction();
+    radioMenu.processInputs();
+    digitalToFunction.doFunction();
+    expo.doFunction();
+    trim.doFunction();
+    dualRate.doFunction();
+    mixer.doFunction();
+    functionToChannel.doFunction();
+    transmitter.doFunction();
   }
-  analogToDigital.doFunction();
-  radioMenu.processInputs();
-  digitalToFunction.doFunction();
-  expo.doFunction();
-  trim.doFunction();
-  dualRate.doFunction();
-  mixer.doFunction();
-  functionToChannel.doFunction();
-  transmitter.doFunction();
 }
