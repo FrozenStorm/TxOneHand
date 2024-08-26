@@ -38,7 +38,7 @@ void Trim::doFunction()
 {
     calcTrim(radioData.functionData.roll,radioData.trimData.roll);
     calcTrim(radioData.functionData.pitch,radioData.trimData.pitch);
-    calcTrim(radioData.functionData.throttle,radioData.trimData.slider);
+    calcTrim(radioData.functionData.throttle,radioData.trimData.throttle);
 }
 
 void Trim::calcTrim(float& value, const int trim)
@@ -84,7 +84,7 @@ void Trim::changeTrim(int& trim, const bool moreNotLess)
     {
         trim--;
     }
-    radioData.storeData();
+    radioData.storeTrimData();
 }
 
 void Trim::showMenu()

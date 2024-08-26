@@ -59,11 +59,11 @@ bool Model::left()
     switch (selectedMenuEntry)
     {
     case SELECTED_MODEL:
-        radioData.storeData();
+        radioData.storeModelData();
         if(radioData.selectedModel > 0) radioData.selectedModel--;
         else radioData.selectedModel = MAX_NUMBER_OF_MODELS-1;
-        radioData.loadData();
-        radioData.storeSelectedModel();
+        radioData.loadModelData();
+        radioData.storeGlobalData();
         modelNameInputPosition = 0;
         modelNameInputCharacter = radioData.modelData.modelName[modelNameInputPosition];
         break;
@@ -85,11 +85,11 @@ bool Model::right()
     switch (selectedMenuEntry)
     {
     case SELECTED_MODEL:
-        radioData.storeData();
+        radioData.storeModelData();
         if(radioData.selectedModel < MAX_NUMBER_OF_MODELS-1) radioData.selectedModel++;
         else radioData.selectedModel = 0;
-        radioData.loadData();
-        radioData.storeSelectedModel();
+        radioData.loadModelData();
+        radioData.storeGlobalData();
         modelNameInputPosition = 0;
         modelNameInputCharacter = radioData.modelData.modelName[modelNameInputPosition];
         break;

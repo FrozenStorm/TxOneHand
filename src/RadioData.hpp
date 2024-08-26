@@ -1,23 +1,21 @@
 #ifndef RADIO_DATA_HPP
 #define RADIO_DATA_HPP
 
-#include <EEPROM.h>
+#include <Preferences.h>
 #include <list.h>
 #include "Protocol.hpp"
 
-#define MAX_NUMBER_OF_MODELS 3
+#define MAX_NUMBER_OF_MODELS 16
 #define MODEL_NAME_LENGTH 12
 #define CHARACTER_SET_LENGTH 38
-#define CRC_VALUE 42
 #define SUPPORTED_CHANNELS 8
 
 class RadioData
 {
 private:
-    int eepromSizeModel = 0;
-    int eepromSizeGobal = 0;
     char modelNameString[MODEL_NAME_LENGTH+1] = "123456789_12";
-    void setDefaultValues(void);
+    Preferences pref;
+
 public:
     struct AnalogToDigitalData
     {
@@ -70,7 +68,7 @@ public:
     {
         int roll;
         int pitch;
-        int slider;
+        int throttle;
     };
     TrimData trimData;
 
@@ -594,19 +592,18 @@ public:
     TransmitterData transmitterData;
     
     const char modelNameCharacters[CHARACTER_SET_LENGTH] = {' ','-','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','0','1','2','3','4','5','6','7','8','9'};
-    unsigned int selectedModel;
+    unsigned char selectedModel;
     struct ModelData
     {
         char modelName[MODEL_NAME_LENGTH];
-        char crc;
     };
     ModelData modelData;
 
-    void storeData();
-    void loadData();
-
-    void storeSelectedModel();
-    void loadSelectedModel();
+    void storeModelData();
+    void loadModelData();
+    void storeTrimData();
+    void storeGlobalData();
+    void loadGlobalData();    
 
     char* getModelName(void);
     
@@ -614,49 +611,13 @@ public:
     ~RadioData();
 };
 
-char* RadioData::getModelName(void)
-{
-    int i;
-    bool firstCharacterFound = false;
-    for(i=MODEL_NAME_LENGTH-1;i>=0;i--)
-    {
-        if(modelData.modelName[i] == 0 && firstCharacterFound == false && i != 0){
-            modelNameString[i] = '\n';
-        }
-        else{
-            firstCharacterFound = true;
-            modelNameString[i] = modelNameCharacters[modelData.modelName[i]];
-        }
-    }
-    return modelNameString;
-}
-
 RadioData::RadioData(/* args */)
 {
-    setDefaultValues();
-    selectedModel = 0;
+    loadGlobalData();
 
-    eepromSizeModel = 0;
-    eepromSizeModel += sizeof(AnalogToDigitalData);
-    eepromSizeModel += sizeof(ExpoData);
-    eepromSizeModel += sizeof(DualRateData);
-    eepromSizeModel += sizeof(TrimData);
-    eepromSizeModel += sizeof(FunctionToChannelData);
-    eepromSizeModel += sizeof(MixerData);
-    eepromSizeModel += sizeof(TransmitterData);
-    eepromSizeModel += sizeof(ModelData);
-    eepromSizeModel = eepromSizeModel * MAX_NUMBER_OF_MODELS;
-
-    eepromSizeGobal = sizeof(selectedModel);
-}
-
-RadioData::~RadioData()
-{
-}
-
-void RadioData::setDefaultValues()
-{
-    analogToDigitalData = {
+    loadModelData();
+    
+analogToDigitalData = {
         .stickLimitUpDown = {.min = 0.16, .max = 2.82, .center = 1.34, .invert = true},
         .stickLimitLeftRight = {.min = 0.21, .max = 2.90, .center = 1.49, .invert = false},
         .stickLimitSlider = {.min = 0.0, .max = 1.32, .center = 0.65, .invert = true},
@@ -675,12 +636,12 @@ void RadioData::setDefaultValues()
     dualRateData = {
         .roll = 1,
         .pitch = 1,
-        .throttle = 1,
+        .throttle = 1
     };
     trimData = {
         .roll = 0,
         .pitch = 0,
-        .slider = 0
+        .throttle = 0
     };
     mixerData = {
         .throttleToPitch = 0
@@ -705,114 +666,209 @@ void RadioData::setDefaultValues()
         .powerValue = POWER_VALUE_HIGH,
     };
     modelData = {
-        .modelName = {2,13,22,13,2,0,0,0,0,0,0,0},
-        .crc = CRC_VALUE
+        .modelName = {2,13,22,13,2,0,0,0,0,0,0,0}
     };
 }
 
-void RadioData::storeData()
+RadioData::~RadioData()
 {
-    int address = eepromSizeModel / MAX_NUMBER_OF_MODELS * selectedModel + eepromSizeGobal;
-
-    // TODO REMOVE EEPROM SIZE PRINT
-    /*
-    Serial.printf("AnalogToDigitalData = %d\n",sizeof(AnalogToDigitalData));
-    Serial.printf("ExpoData = %d\n",sizeof(ExpoData));
-    Serial.printf("DualRateData = %d\n",sizeof(DualRateData));
-    Serial.printf("TrimData = %d\n",sizeof(TrimData));
-    Serial.printf("FunctionToChannelData = %d\n",sizeof(FunctionToChannelData));
-    Serial.printf("MixerData = %d\n",sizeof(MixerData));
-    Serial.printf("TransmitterData = %d\n",sizeof(TransmitterData));
-    Serial.printf("ModelData = %d\n",sizeof(ModelData));
-    Serial.printf("eepromSizeModel = %d\n",eepromSizeModel);
-    Serial.printf("eepromSizeGobal = %d\n",eepromSizeGobal);
-    */
-
-    if(EEPROM.begin(eepromSizeModel + eepromSizeGobal) == true){
-        EEPROM.put(address,analogToDigitalData);
-        address += sizeof(AnalogToDigitalData);
-
-        EEPROM.put(address,expoData);
-        address += sizeof(ExpoData);
-
-        EEPROM.put(address,dualRateData);
-        address += sizeof(DualRateData);
-
-        EEPROM.put(address,trimData);
-        address += sizeof(TrimData);
-
-        EEPROM.put(address,functionToChannelData);
-        address += sizeof(FunctionToChannelData);
-
-        EEPROM.put(address,mixerData);
-        address += sizeof(MixerData);
-
-        EEPROM.put(address,mixerData);
-        address += sizeof(MixerData);
-
-        EEPROM.put(address,transmitterData);
-        address += sizeof(TransmitterData);
-
-        EEPROM.put(address,modelData);
-        address += sizeof(ModelData);
-    }
-    EEPROM.end();
 }
 
-void RadioData::loadData()
+char* RadioData::getModelName(void)
 {
-    int address = eepromSizeModel / MAX_NUMBER_OF_MODELS * selectedModel + eepromSizeGobal;
-
-    if(EEPROM.begin(eepromSizeModel + eepromSizeGobal) == true){
-        EEPROM.get(address,analogToDigitalData);
-        address += sizeof(AnalogToDigitalData);
-
-        EEPROM.get(address,expoData);
-        address += sizeof(ExpoData);
-
-        EEPROM.get(address,dualRateData);
-        address += sizeof(DualRateData);
-
-        EEPROM.get(address,trimData);
-        address += sizeof(TrimData);
-
-        EEPROM.get(address,functionToChannelData);
-        address += sizeof(FunctionToChannelData);
-
-        EEPROM.get(address,mixerData);
-        address += sizeof(MixerData);
-
-        EEPROM.get(address,mixerData);
-        address += sizeof(MixerData);
-
-        EEPROM.get(address,transmitterData);
-        address += sizeof(TransmitterData);
-
-        EEPROM.get(address,modelData);
-        address += sizeof(ModelData);
+    int i;
+    bool firstCharacterFound = false;
+    for(i=MODEL_NAME_LENGTH-1;i>=0;i--)
+    {
+        if(modelData.modelName[i] == 0 && firstCharacterFound == false && i != 0){
+            modelNameString[i] = '\n';
+        }
+        else{
+            firstCharacterFound = true;
+            modelNameString[i] = modelNameCharacters[modelData.modelName[i]];
+        }
     }
-    EEPROM.end();
-
-    if(modelData.crc != CRC_VALUE){
-        setDefaultValues();
-    }
+    return modelNameString;
 }
 
-void RadioData::storeSelectedModel()
+void RadioData::storeGlobalData()
 {
-    if(EEPROM.begin(eepromSizeModel + eepromSizeGobal) == true){
-        EEPROM.put(0, selectedModel);
-    }
-    EEPROM.end();
+    pref.begin("Global");
+    pref.putUChar("selectedModel", selectedModel);
+    pref.end();
 }
 
-void RadioData::loadSelectedModel()
+void RadioData::storeModelData()
 {
-    if(EEPROM.begin(eepromSizeModel + eepromSizeGobal) == true){
-        EEPROM.get(0, selectedModel);
+    char name[15];
+
+    sprintf(name,"Model-%d",selectedModel);
+    pref.begin(name);
+
+    pref.putFloat("atdd.slud.min", analogToDigitalData.stickLimitUpDown.min);
+    pref.putFloat("atdd.slud.max", analogToDigitalData.stickLimitUpDown.max);
+    pref.putFloat("atdd.slud.cen", analogToDigitalData.stickLimitUpDown.center);
+    pref.putBool("atdd.slud.inv", analogToDigitalData.stickLimitUpDown.invert);
+
+    pref.putFloat("atdd.sllr.min", analogToDigitalData.stickLimitUpDown.min);
+    pref.putFloat("atdd.sllr.max", analogToDigitalData.stickLimitUpDown.max);
+    pref.putFloat("atdd.sllr.cen", analogToDigitalData.stickLimitUpDown.center);
+    pref.putBool("atdd.sllr.inv", analogToDigitalData.stickLimitUpDown.invert);
+
+    pref.putFloat("atdd.sls.min", analogToDigitalData.stickLimitUpDown.min);
+    pref.putFloat("atdd.sls.max", analogToDigitalData.stickLimitUpDown.max);
+    pref.putFloat("atdd.sls.cen", analogToDigitalData.stickLimitUpDown.center);
+    pref.putBool("atdd.sls.inv", analogToDigitalData.stickLimitUpDown.invert);
+
+    pref.putFloat("atdd.mbl.up", analogToDigitalData.menuButtonLimit.up);
+    pref.putFloat("atdd.mbl.dow", analogToDigitalData.menuButtonLimit.down);
+    pref.putFloat("atdd.mbl.lef", analogToDigitalData.menuButtonLimit.left);
+    pref.putFloat("atdd.mbl.rig", analogToDigitalData.menuButtonLimit.right);
+    pref.putFloat("atdd.mbl.cen", analogToDigitalData.menuButtonLimit.center);
+
+    pref.putFloat("atdd.mbt", analogToDigitalData.menuButtonTolerance);
+
+    pref.putInt("atdd.lpdm", analogToDigitalData.longPressDurationMs);
+
+    pref.putFloat("stdd.slp", sensorToDigitalData.seaLevelPressure);
+    
+    pref.putFloat("ed.rol", expoData.roll);
+    pref.putFloat("ed.pit", expoData.pitch);
+    pref.putFloat("ed.thr", expoData.throttle); 
+
+    pref.putFloat("drd.rol", dualRateData.roll);
+    pref.putFloat("drd.pit", dualRateData.pitch);
+    pref.putFloat("drd.thr", dualRateData.throttle); 
+
+    pref.putFloat("td.rol", trimData.roll);
+    pref.putFloat("td.pit", trimData.pitch);
+    pref.putFloat("td.thr", trimData.throttle); 
+
+    pref.putFloat("md.ttp", mixerData.throttleToPitch);
+
+    for(int i=0; i<SUPPORTED_CHANNELS; i++)
+    {
+        sprintf(name,"ftcd.ic.%d",i);
+        pref.putBool(name, functionToChannelData.invertChannel[i]);
+        sprintf(name,"ftcd.ftc.%d",i);
+        pref.putInt(name, functionToChannelData.functionOnChannel[i]);
+        sprintf(name,"ftcd.ulc.%d",i);
+        pref.putInt(name, functionToChannelData.upperLimitChannel[i]);
+        sprintf(name,"ftcd.llc.%d",i);
+        pref.putInt(name, functionToChannelData.lowerLimitChannel[i]);
     }
-    EEPROM.end();
-    if(selectedModel > MAX_NUMBER_OF_MODELS - 1) selectedModel = 0;
+
+    pref.putInt("td.bs", transmitterData.bindingState);
+    pref.putInt("td.sp", transmitterData.selectedProtocol);
+    pref.putInt("td.ssp", transmitterData.selectedSubProtocol);
+    pref.putBool("td.rc", transmitterData.rangeCheck);
+    pref.putInt("td.rn", transmitterData.rxNum);
+    pref.putInt("td.bs", transmitterData.powerValue);
+
+    pref.putBytes("md.mn", modelData.modelName, sizeof(modelData.modelName));
+    
+    pref.end();    
+}
+
+void RadioData::storeTrimData()
+{
+    char name[15];
+
+    sprintf(name,"Model-%d",selectedModel);
+    pref.begin(name);
+
+    pref.putFloat("td.rol", trimData.roll);
+    pref.putFloat("td.pit", trimData.pitch);
+    pref.putFloat("td.thr", trimData.throttle); 
+    
+    pref.end();    
+}
+
+void RadioData::loadGlobalData()
+{
+    pref.begin("Global");
+    selectedModel = pref.getUChar("sm", 0);
+    pref.end();
+}
+
+void RadioData::loadModelData()
+{
+    char name[15];
+    int readSize;
+
+    sprintf(name,"Model-%d",selectedModel);
+    pref.begin(name);
+
+    analogToDigitalData.stickLimitUpDown.min = pref.getFloat("atdd.slud.min", 0.16);
+    analogToDigitalData.stickLimitUpDown.max = pref.getFloat("atdd.slud.max", 2.82);
+    analogToDigitalData.stickLimitUpDown.center = pref.getFloat("atdd.slud.cen", 1.34);
+    analogToDigitalData.stickLimitUpDown.invert = pref.getBool("atdd.slud.inv", true);
+
+    analogToDigitalData.stickLimitUpDown.min = pref.getFloat("atdd.sllr.min", 0.21);
+    analogToDigitalData.stickLimitUpDown.max = pref.getFloat("atdd.sllr.max", 2.90);
+    analogToDigitalData.stickLimitUpDown.center = pref.getFloat("atdd.sllr.cen", 1.49);
+    analogToDigitalData.stickLimitUpDown.invert = pref.getBool("atdd.sllr.inv", false);
+
+    analogToDigitalData.stickLimitUpDown.min = pref.getFloat("atdd.sls.min", 0.0);
+    analogToDigitalData.stickLimitUpDown.max = pref.getFloat("atdd.sls.max", 1.32);
+    analogToDigitalData.stickLimitUpDown.center = pref.getFloat("atdd.sls.cen", 0.65);
+    analogToDigitalData.stickLimitUpDown.invert = pref.getBool("atdd.sls.inv", true);
+
+    analogToDigitalData.menuButtonLimit.up = pref.getFloat("atdd.mbl.up", 1.67);
+    analogToDigitalData.menuButtonLimit.down = pref.getFloat("atdd.mbl.dow", 0.53);
+    analogToDigitalData.menuButtonLimit.left = pref.getFloat("atdd.mbl.lef", 0.38);
+    analogToDigitalData.menuButtonLimit.right = pref.getFloat("atdd.mbl.rig", 1.38);
+    analogToDigitalData.menuButtonLimit.center = pref.getFloat("atdd.mbl.cen", 0.96);
+
+    analogToDigitalData.menuButtonTolerance = pref.getFloat("atdd.mbt", 0.1);
+
+    analogToDigitalData.longPressDurationMs = pref.getInt("atdd.lpdm", 600);
+
+    sensorToDigitalData.seaLevelPressure = pref.getFloat("stdd.slp", 1013.25);
+    
+    expoData.roll = pref.getFloat("ed.rol", 0.3);
+    expoData.pitch = pref.getFloat("ed.pit", 0.3);
+    expoData.throttle = pref.getFloat("ed.thr", 0); 
+
+    dualRateData.roll = pref.getFloat("drd.rol", 1);
+    dualRateData.pitch = pref.getFloat("drd.pit", 1);
+    dualRateData.throttle = pref.getFloat("drd.thr", 1); 
+
+    trimData.roll = pref.getFloat("td.rol", 0);
+    trimData.pitch = pref.getFloat("td.pit", 0);
+    trimData.throttle = pref.getFloat("td.thr", 0); 
+
+    mixerData.throttleToPitch = pref.getFloat("md.ttp", 0);
+
+    for(int i=0; i<SUPPORTED_CHANNELS; i++)
+    {
+        sprintf(name,"ftcd.ic.%d",i);
+        functionToChannelData.invertChannel[i] = pref.getBool(name, false);
+        sprintf(name,"ftcd.ftc.%d",i);
+        functionToChannelData.functionOnChannel[i] = (Function)pref.getInt(name, NONE);
+        sprintf(name,"ftcd.ulc.%d",i);
+        functionToChannelData.upperLimitChannel[i] = pref.getInt(name, 2047);
+        sprintf(name,"ftcd.llc.%d",i);
+        functionToChannelData.lowerLimitChannel[i] = pref.getInt(name, 0);
+    }
+
+    transmitterData.bindingState = (BindingState)pref.getInt("td.bs", BINDED);
+    transmitterData.selectedProtocol = pref.getInt("td.sp", 6);
+    transmitterData.selectedSubProtocol = pref.getInt("td.ssp", 2);
+    transmitterData.rangeCheck = pref.getBool("td.rc", false);
+    transmitterData.rxNum = pref.getInt("td.rn", 0);
+    transmitterData.powerValue = (PowerValue)pref.getInt("td.bs", POWER_VALUE_HIGH);
+    
+
+    readSize = pref.getBytes("md.mn", modelData.modelName, sizeof(modelData.modelName));
+    if(readSize == 0) 
+    {
+        modelData = {
+            .modelName = {2,13,22,13,2,0,0,0,0,0,0,0}
+        };
+    }
+    
+    pref.end();
 }
 
 #endif

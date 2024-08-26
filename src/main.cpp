@@ -46,7 +46,6 @@ RadioMenu                         radioMenu = RadioMenu(tft, radioData, &trim);
 
 /* -------------------- Setup ----------------------------------------------------------------------------------*/
 void setup() {
-
   Serial.begin(115200);
 
   // Menu
@@ -72,33 +71,28 @@ void setup() {
   tft.setCursor(0, 0, 2);
   tft.setTextColor(TFT_WHITE,TFT_BLACK,true);  
   tft.setTextSize(1);
-
-  //EEPROM
-  radioData.loadSelectedModel();
-  radioData.loadData();
   
   // Loop Delay
   targetTime = millis() + LOOP_DELAY_MS; 
-
 }
 
 /* -------------------- Main -----------------------------------------------------------------------------------*/
 void loop() {
-  /*
   static uint32_t lastCall = millis();
   char myString[20];
   uint32_t deltaT = 0;
   static uint32_t maxHold = 0;
-
-  deltaT = millis()-lastCall;
-  lastCall = lastCall + deltaT;
-  if(deltaT > maxHold) maxHold = deltaT;
-  sprintf(myString,"%3d/%dms",deltaT, maxHold);
-  tft.setTextDatum(TR_DATUM);
-  //tft.drawString(myString,tft.width(),15,2);    
-  */
+ 
   
   if (targetTime < millis()) {
+    deltaT = millis()-lastCall;
+    lastCall = lastCall + deltaT;
+    if(deltaT > maxHold) maxHold = deltaT;
+    sprintf(myString,"%3d/%dms",deltaT, maxHold);
+    tft.setTextDatum(TR_DATUM);
+    tft.drawString(myString,tft.width(),15,2);   
+
+
     targetTime += LOOP_DELAY_MS;
     radioMenu.showMenu();
     analogToDigital.doFunction();

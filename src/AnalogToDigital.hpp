@@ -191,8 +191,8 @@ void AnalogToDigital::doFunction()
     radioData.rawData.stickLeftRight = radioData.rawData.stickLeftRight/10;
     radioData.rawData.slider = radioData.rawData.slider/10;
 
-    radioData.analogData.battery = radioData.rawData.battery*3.1/4096.0*2;
-    radioData.analogData.menu = radioData.rawData.menu*3.1/4096.0;
+    radioData.analogData.battery = radioData.rawData.battery*3.3/4096.0*2;
+    radioData.analogData.menu = radioData.rawData.menu*3.1/4096.0; //TODO sollten alle 3.1V -> 3.3V sein? wenn ja muss default umgerechnet werden.
     radioData.analogData.stickUpDown = radioData.rawData.stickUpDown*3.1/4096.0;
     radioData.analogData.stickLeftRight = radioData.rawData.stickLeftRight*3.1/4096.0;
     radioData.analogData.slider = radioData.rawData.slider*3.1/4096.0;
