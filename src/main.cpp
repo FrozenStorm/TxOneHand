@@ -13,6 +13,7 @@
 #include "Model.hpp"
 #include "RadioMenu.hpp"
 #include "DualRate.hpp"
+#include <nvs_flash.h>
 
 /* -------------------- Defines --------------------------------------------------------------------------------*/
 #define PIN_ACCELEROMETER_SCL 17
@@ -47,6 +48,15 @@ RadioMenu                         radioMenu = RadioMenu(tft, radioData, &trim);
 /* -------------------- Setup ----------------------------------------------------------------------------------*/
 void setup() {
   Serial.begin(115200);
+  // Factory Reset FLASH
+  //nvs_flash_erase();      // erase the NVS partition and...
+  //nvs_flash_init();       // initialize the NVS partition.
+
+  // Load Models
+  radioData.loadGlobalData();
+  radioData.loadModelData();
+  //radioData.storeGlobalData();
+  //radioData.storeModelData();
 
   // Menu
   radioMenu.addEntry(&model);
@@ -78,20 +88,22 @@ void setup() {
 
 /* -------------------- Main -----------------------------------------------------------------------------------*/
 void loop() {
+  /*
   static uint32_t lastCall = millis();
   char myString[20];
   uint32_t deltaT = 0;
   static uint32_t maxHold = 0;
- 
+ */
   
   if (targetTime < millis()) {
+    /*
     deltaT = millis()-lastCall;
     lastCall = lastCall + deltaT;
     if(deltaT > maxHold) maxHold = deltaT;
-    sprintf(myString,"%3d/%dms",deltaT, maxHold);
+    sprintf(myString,"%3d/%dms", deltaT, maxHold);
     tft.setTextDatum(TR_DATUM);
     tft.drawString(myString,tft.width(),15,2);   
-
+    */
 
     targetTime += LOOP_DELAY_MS;
     radioMenu.showMenu();

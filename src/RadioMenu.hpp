@@ -6,6 +6,8 @@
 #include <iterator>
 #include "RadioData.hpp"
 
+#define BATTERY_WARNING_VOLTAGE 3.7
+
 class RadioMenu
 {
 private:
@@ -36,6 +38,15 @@ void RadioMenu::addEntry(RadioClass* menuEntry)
 void RadioMenu::showMenu()
 {
     char myString[40];
+
+    if(radioData.analogData.battery <= BATTERY_WARNING_VOLTAGE) 
+    {
+        tft.setTextColor(TFT_RED,TFT_BLACK,true);  
+    }
+    else
+    {
+        tft.setTextColor(TFT_WHITE,TFT_BLACK,true);  
+    }
 
     tft.setTextDatum(MC_DATUM);
     previousEntry();

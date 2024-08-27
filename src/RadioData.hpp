@@ -5,7 +5,7 @@
 #include <list.h>
 #include "Protocol.hpp"
 
-#define MAX_NUMBER_OF_MODELS 16
+#define MAX_NUMBER_OF_MODELS 3
 #define MODEL_NAME_LENGTH 12
 #define CHARACTER_SET_LENGTH 38
 #define SUPPORTED_CHANNELS 8
@@ -592,7 +592,7 @@ public:
     TransmitterData transmitterData;
     
     const char modelNameCharacters[CHARACTER_SET_LENGTH] = {' ','-','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','0','1','2','3','4','5','6','7','8','9'};
-    unsigned char selectedModel;
+    unsigned int selectedModel;
     struct ModelData
     {
         char modelName[MODEL_NAME_LENGTH];
@@ -613,61 +613,7 @@ public:
 
 RadioData::RadioData(/* args */)
 {
-    loadGlobalData();
-
-    loadModelData();
-    
-analogToDigitalData = {
-        .stickLimitUpDown = {.min = 0.16, .max = 2.82, .center = 1.34, .invert = true},
-        .stickLimitLeftRight = {.min = 0.21, .max = 2.90, .center = 1.49, .invert = false},
-        .stickLimitSlider = {.min = 0.0, .max = 1.32, .center = 0.65, .invert = true},
-        .menuButtonLimit = {.up = 1.67, .down = 0.53, .left = 0.38, .right = 1.38, .center = 0.96},
-        .menuButtonTolerance = 0.1,
-        .longPressDurationMs = 600
-    };
-    sensorToDigitalData = {
-        .seaLevelPressure = 1013.25
-    };
-    expoData = {
-        .roll = 0.3,
-        .pitch = 0.3,
-        .throttle = 0
-    };
-    dualRateData = {
-        .roll = 1,
-        .pitch = 1,
-        .throttle = 1
-    };
-    trimData = {
-        .roll = 0,
-        .pitch = 0,
-        .throttle = 0
-    };
-    mixerData = {
-        .throttleToPitch = 0
-    };
-    functionToChannelData = {
-        .invertChannel = {false,false,false,false,false,false,false,false},
-        .functionOnChannel = {VTAIL_LEFT, VTAIL_RIGHT, THROTTLE, NONE, NONE, NONE, NONE, NONE},
-        .upperLimitChannel = {2047,2047,2047,2047,2047,2047,2047,2047},
-        .lowerLimitChannel = {0,0,0,0,0,0,0,0}
-    };
-    rawData = {};
-    analogData = {};
-    digitalData = {};
-    functionData = {};
-    channelData = {};
-    transmitterData = {
-        .bindingState = BINDED,
-        .selectedProtocol = 6,
-        .selectedSubProtocol = 2,
-        .rangeCheck = false,
-        .rxNum = 0,
-        .powerValue = POWER_VALUE_HIGH,
-    };
-    modelData = {
-        .modelName = {2,13,22,13,2,0,0,0,0,0,0,0}
-    };
+ 
 }
 
 RadioData::~RadioData()
@@ -693,8 +639,13 @@ char* RadioData::getModelName(void)
 
 void RadioData::storeGlobalData()
 {
-    pref.begin("Global");
-    pref.putUChar("selectedModel", selectedModel);
+    if(!pref.begin("Global"))
+    {
+        Serial.println("storeGlobalData begin error");
+        return;
+    }
+    pref.putUInt("sm", selectedModel);
+    Serial.printf("Global entries left = %u\n", pref.freeEntries());
     pref.end();
 }
 
@@ -703,22 +654,26 @@ void RadioData::storeModelData()
     char name[15];
 
     sprintf(name,"Model-%d",selectedModel);
-    pref.begin(name);
+    if(!pref.begin(name))
+    {
+        Serial.printf("storeModelData %s begin error", name);
+        return;
+    }
 
     pref.putFloat("atdd.slud.min", analogToDigitalData.stickLimitUpDown.min);
     pref.putFloat("atdd.slud.max", analogToDigitalData.stickLimitUpDown.max);
     pref.putFloat("atdd.slud.cen", analogToDigitalData.stickLimitUpDown.center);
     pref.putBool("atdd.slud.inv", analogToDigitalData.stickLimitUpDown.invert);
 
-    pref.putFloat("atdd.sllr.min", analogToDigitalData.stickLimitUpDown.min);
-    pref.putFloat("atdd.sllr.max", analogToDigitalData.stickLimitUpDown.max);
-    pref.putFloat("atdd.sllr.cen", analogToDigitalData.stickLimitUpDown.center);
-    pref.putBool("atdd.sllr.inv", analogToDigitalData.stickLimitUpDown.invert);
+    pref.putFloat("atdd.sllr.min", analogToDigitalData.stickLimitLeftRight.min);
+    pref.putFloat("atdd.sllr.max", analogToDigitalData.stickLimitLeftRight.max);
+    pref.putFloat("atdd.sllr.cen", analogToDigitalData.stickLimitLeftRight.center);
+    pref.putBool("atdd.sllr.inv", analogToDigitalData.stickLimitLeftRight.invert);
 
-    pref.putFloat("atdd.sls.min", analogToDigitalData.stickLimitUpDown.min);
-    pref.putFloat("atdd.sls.max", analogToDigitalData.stickLimitUpDown.max);
-    pref.putFloat("atdd.sls.cen", analogToDigitalData.stickLimitUpDown.center);
-    pref.putBool("atdd.sls.inv", analogToDigitalData.stickLimitUpDown.invert);
+    pref.putFloat("atdd.sls.min", analogToDigitalData.stickLimitSlider.min);
+    pref.putFloat("atdd.sls.max", analogToDigitalData.stickLimitSlider.max);
+    pref.putFloat("atdd.sls.cen", analogToDigitalData.stickLimitSlider.center);
+    pref.putBool("atdd.sls.inv", analogToDigitalData.stickLimitSlider.invert);
 
     pref.putFloat("atdd.mbl.up", analogToDigitalData.menuButtonLimit.up);
     pref.putFloat("atdd.mbl.dow", analogToDigitalData.menuButtonLimit.down);
@@ -767,7 +722,8 @@ void RadioData::storeModelData()
 
     pref.putBytes("md.mn", modelData.modelName, sizeof(modelData.modelName));
     
-    pref.end();    
+    Serial.printf("Model-%d entries left = %u\n", selectedModel, pref.freeEntries());
+    pref.end();
 }
 
 void RadioData::storeTrimData()
@@ -775,19 +731,28 @@ void RadioData::storeTrimData()
     char name[15];
 
     sprintf(name,"Model-%d",selectedModel);
-    pref.begin(name);
+    if(!pref.begin(name))
+    {
+        Serial.printf("storeTrimData %s begin error", name);
+        return;
+    }
 
     pref.putFloat("td.rol", trimData.roll);
     pref.putFloat("td.pit", trimData.pitch);
     pref.putFloat("td.thr", trimData.throttle); 
     
+    Serial.printf("Model-%d entries left = %u\n", selectedModel, pref.freeEntries());
     pref.end();    
 }
 
 void RadioData::loadGlobalData()
 {
-    pref.begin("Global");
-    selectedModel = pref.getUChar("sm", 0);
+    if(!pref.begin("Global"))
+    {
+        Serial.println("loadGlobalData begin error");
+        return;
+    }
+    selectedModel = pref.getUInt("sm", 0);
     pref.end();
 }
 
@@ -797,22 +762,26 @@ void RadioData::loadModelData()
     int readSize;
 
     sprintf(name,"Model-%d",selectedModel);
-    pref.begin(name);
+    if(!pref.begin(name))
+    {
+        Serial.printf("loadModelData %s begin error", name);
+        return;
+    }
 
     analogToDigitalData.stickLimitUpDown.min = pref.getFloat("atdd.slud.min", 0.16);
     analogToDigitalData.stickLimitUpDown.max = pref.getFloat("atdd.slud.max", 2.82);
     analogToDigitalData.stickLimitUpDown.center = pref.getFloat("atdd.slud.cen", 1.34);
     analogToDigitalData.stickLimitUpDown.invert = pref.getBool("atdd.slud.inv", true);
 
-    analogToDigitalData.stickLimitUpDown.min = pref.getFloat("atdd.sllr.min", 0.21);
-    analogToDigitalData.stickLimitUpDown.max = pref.getFloat("atdd.sllr.max", 2.90);
-    analogToDigitalData.stickLimitUpDown.center = pref.getFloat("atdd.sllr.cen", 1.49);
-    analogToDigitalData.stickLimitUpDown.invert = pref.getBool("atdd.sllr.inv", false);
+    analogToDigitalData.stickLimitLeftRight.min = pref.getFloat("atdd.sllr.min", 0.21);
+    analogToDigitalData.stickLimitLeftRight.max = pref.getFloat("atdd.sllr.max", 2.90);
+    analogToDigitalData.stickLimitLeftRight.center = pref.getFloat("atdd.sllr.cen", 1.49);
+    analogToDigitalData.stickLimitLeftRight.invert = pref.getBool("atdd.sllr.inv", false);
 
-    analogToDigitalData.stickLimitUpDown.min = pref.getFloat("atdd.sls.min", 0.0);
-    analogToDigitalData.stickLimitUpDown.max = pref.getFloat("atdd.sls.max", 1.32);
-    analogToDigitalData.stickLimitUpDown.center = pref.getFloat("atdd.sls.cen", 0.65);
-    analogToDigitalData.stickLimitUpDown.invert = pref.getBool("atdd.sls.inv", true);
+    analogToDigitalData.stickLimitSlider.min = pref.getFloat("atdd.sls.min", 0.0);
+    analogToDigitalData.stickLimitSlider.max = pref.getFloat("atdd.sls.max", 1.32);
+    analogToDigitalData.stickLimitSlider.center = pref.getFloat("atdd.sls.cen", 0.65);
+    analogToDigitalData.stickLimitSlider.invert = pref.getBool("atdd.sls.inv", true);
 
     analogToDigitalData.menuButtonLimit.up = pref.getFloat("atdd.mbl.up", 1.67);
     analogToDigitalData.menuButtonLimit.down = pref.getFloat("atdd.mbl.dow", 0.53);
