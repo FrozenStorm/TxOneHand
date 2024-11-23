@@ -16,6 +16,7 @@
 #include "SensorToDigital.hpp"
 #include <nvs_flash.h>
 #include <Adafruit_MPU6050.h>
+#include <Adafruit_BMP085.h>
 
 /* -------------------- Defines --------------------------------------------------------------------------------*/
 #define PIN_ACCELEROMETER_SCL 17
@@ -34,6 +35,7 @@
 /* -------------------- Variable -------------------------------------------------------------------------------*/
 TFT_eSPI                          tft = TFT_eSPI(); 
 Adafruit_MPU6050                  mpu;
+Adafruit_BMP085                   bmp;
 uint32_t                          targetTime = 0;         
 RadioData                         radioData = RadioData();
 AnalogToDigital                   analogToDigital = AnalogToDigital(tft, radioData);
@@ -46,7 +48,7 @@ FunctionToChannel                 functionToChannel = FunctionToChannel(tft, rad
 Transmitter                       transmitter = Transmitter(tft, radioData);
 Model                             model = Model(tft, radioData);
 RadioMenu                         radioMenu = RadioMenu(tft, radioData, &trim);
-SensorToDigital                   sensorToDigital = SensorToDigital(tft, radioData, &mpu);
+SensorToDigital                   sensorToDigital = SensorToDigital(tft, radioData, &mpu, &bmp);
 /* -------------------- Functions Prototypes -------------------------------------------------------------------*/
 
 /* -------------------- Setup ----------------------------------------------------------------------------------*/
@@ -96,6 +98,7 @@ void setup() {
   mpu.setAccelerometerRange(MPU6050_RANGE_2_G);
   mpu.setGyroRange(MPU6050_RANGE_250_DEG);
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+  bmp.begin();
   Serial.println("Sensor ready");
   
   // Loop Delay

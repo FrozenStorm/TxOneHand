@@ -104,7 +104,6 @@ public:
         float accelPitch = 0;
         float accelRoll = 0;
         float accelYaw = 0;
-        float altitude = 0;
     };
     RawData rawData;
 
@@ -125,7 +124,6 @@ public:
         float pitch = 0;
         float roll = 0;
         float yaw = 0;
-        float altitude = 0;
     };
     AnalogData analogData;
     

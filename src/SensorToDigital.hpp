@@ -4,6 +4,7 @@
 #include "RadioClass.hpp"
 
 #include <Adafruit_MPU6050.h>
+#include <Adafruit_BMP085.h>
 #include <Wire.h>
 
 
@@ -14,7 +15,8 @@ private:
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
 
     Adafruit_MPU6050*   mpu;
-    float               filterRate = 0.8;                
+    Adafruit_BMP085*    bmp;
+    float               filterRate = 0.5;                
     float               gyroRate = 0.01;
     struct AngleLimit{
         float delta;
@@ -27,7 +29,7 @@ private:
     float analogToDigital(float value, const AngleLimit& limit);
     
 public:
-    SensorToDigital(TFT_eSPI& newTft, RadioData& newRadioData, Adafruit_MPU6050* newMpu);
+    SensorToDigital(TFT_eSPI& newTft, RadioData& newRadioData, Adafruit_MPU6050* newMpu, Adafruit_BMP085* newBmp);
     void doFunction();
     void showValue();
 
@@ -40,14 +42,15 @@ public:
     void center();
 };
 
-SensorToDigital::SensorToDigital(TFT_eSPI& newTft, RadioData& newRadioData, Adafruit_MPU6050* newMpu):RadioClass(newTft, newRadioData)
+SensorToDigital::SensorToDigital(TFT_eSPI& newTft, RadioData& newRadioData, Adafruit_MPU6050* newMpu, Adafruit_BMP085* newBmp):RadioClass(newTft, newRadioData)
 {
     mpu = newMpu;
+    bmp = newBmp;
 }
 
 void SensorToDigital::showMenu()
 {
-    sprintf(myString,"Pre. at Seal. = %4.2fhPa\n", radioData.sensorToDigitalData.seaLevelPressure);
+    sprintf(myString,"Pre. Seal. = %4.0fhPa\n", radioData.sensorToDigitalData.seaLevelPressure);
     tft.drawString(myString, posW, posH+incH*0);
 
     sprintf(myString,"filterRate = %1.2f\n", filterRate);
@@ -65,7 +68,7 @@ void SensorToDigital::showMenu()
     sprintf(myString,"Yaw = %3.2f\n", radioData.digitalData.yaw);
     tft.drawString(myString, posW, posH+incH*5);
 
-    sprintf(myString,"Altitude = %4.2fm\n", radioData.digitalData.altitude);
+    sprintf(myString,"Altitude = %4.0fm\n", radioData.digitalData.altitude);
     tft.drawString(myString, posW, posH+incH*6);
 
     sprintf(myString,"Temperature = %2.1fC\n", radioData.digitalData.temperature);
@@ -152,7 +155,9 @@ void SensorToDigital::doFunction()
     radioData.digitalData.pitch = analogToDigital(radioData.analogData.pitch, angleLimitPitch);
     radioData.digitalData.roll = analogToDigital(radioData.analogData.roll, angleLimitRoll);
     // TODO radioData.digitalData.yaw = .............
-    radioData.digitalData.temperature = temp.temperature;
+
+    radioData.digitalData.altitude = filterRate * bmp->readAltitude(radioData.sensorToDigitalData.seaLevelPressure * 100) + (1 - filterRate) * radioData.digitalData.altitude;
+    radioData.digitalData.temperature = bmp->readTemperature();
 }
 
 void SensorToDigital::showValue()
