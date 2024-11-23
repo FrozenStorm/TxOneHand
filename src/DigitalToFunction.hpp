@@ -29,9 +29,19 @@ const char * DigitalToFunction::getTitle()
 
 void DigitalToFunction::doFunction()
 {
-    radioData.functionData.pitch = radioData.digitalData.stickUpDown;
-    radioData.functionData.roll = radioData.digitalData.stickLeftRight;
-    radioData.functionData.throttle = radioData.digitalData.slider;
+    if(radioData.digitalData.sideSwitch == 1)
+    {
+        radioData.functionData.pitch = radioData.digitalData.pitch;
+        radioData.functionData.roll = radioData.digitalData.roll;
+        radioData.functionData.throttle = radioData.digitalData.slider;
+    }
+    else
+    {
+        radioData.functionData.pitch = radioData.digitalData.stickUpDown;
+        radioData.functionData.roll = radioData.digitalData.stickLeftRight;
+        radioData.functionData.throttle = radioData.digitalData.slider;
+    }
+
 }
 
 

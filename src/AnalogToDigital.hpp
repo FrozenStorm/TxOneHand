@@ -9,9 +9,13 @@
 #define PIN_BAT_VOLTAGE         4
 #define PIN_MENU                10 
 
-#define PIN_SWITCH              11  
+#define PIN_SIDE_SWITCH         11  
 
 #define BATTERY_VOLTAGE_OFFSET  0.4
+
+#define ADC_REF_VOLTAGE         3.1
+#define ADC_MAX_VALUE           4096.0
+#define FILTER_LENGTH           10
 
 class AnalogToDigital : public RadioClass
 {
@@ -60,6 +64,9 @@ void AnalogToDigital::showMenu()
     tft.drawString(myString, posW, posH+incH*4);
     sprintf(myString,"SL: %1.2fV:%1.2fV:%1.2fV\n", radioData.analogToDigitalData.stickLimitSlider.min, radioData.analogToDigitalData.stickLimitSlider.center, radioData.analogToDigitalData.stickLimitSlider.max);
     tft.drawString(myString, posW, posH+incH*5);
+
+    sprintf(myString,"MB : %1.2fV, SS : %1.2fV\n", radioData.analogData.menu, radioData.analogData.sideSwitch);
+    tft.drawString(myString, posW, posH+incH*6);
 
     drawMenuPointer(selectedMenuEntry,NUMBER_OF_MENUENTRIES);
 }
@@ -170,34 +177,35 @@ AnalogToDigital::AnalogToDigital(TFT_eSPI& newTft, RadioData& newRadioData) : Ra
     adcAttachPin(PIN_THROTTLE);
     adcAttachPin(PIN_MENU);
     adcAttachPin(PIN_BAT_VOLTAGE);
-
-    pinMode(PIN_SWITCH, INPUT_PULLUP);
+    adcAttachPin(PIN_SIDE_SWITCH);
 }
 
 void AnalogToDigital::doFunction()
 {
     radioData.rawData.menu = analogRead(PIN_MENU);
+    radioData.rawData.sideSwitch = analogRead(PIN_SIDE_SWITCH);
 
     radioData.rawData.stickUpDown = 0;
     radioData.rawData.stickLeftRight = 0;
     radioData.rawData.slider = 0;
     radioData.rawData.battery = 0;
-    for(int i=0;i<10;i++){
+    for(int i=0;i<FILTER_LENGTH;i++){
         radioData.rawData.battery += analogRead(PIN_BAT_VOLTAGE);
         radioData.rawData.stickUpDown += analogRead(PIN_JOY_PITCH);
         radioData.rawData.stickLeftRight += analogRead(PIN_JOY_ROLL);
         radioData.rawData.slider += analogRead(PIN_THROTTLE);
     }
-    radioData.rawData.battery = radioData.rawData.battery/10;    
-    radioData.rawData.stickUpDown = radioData.rawData.stickUpDown/10;
-    radioData.rawData.stickLeftRight = radioData.rawData.stickLeftRight/10;
-    radioData.rawData.slider = radioData.rawData.slider/10;
+    radioData.rawData.battery = radioData.rawData.battery/FILTER_LENGTH;    
+    radioData.rawData.stickUpDown = radioData.rawData.stickUpDown/FILTER_LENGTH;
+    radioData.rawData.stickLeftRight = radioData.rawData.stickLeftRight/FILTER_LENGTH;
+    radioData.rawData.slider = radioData.rawData.slider/FILTER_LENGTH;
 
-    radioData.analogData.battery = radioData.rawData.battery*3.1/4096.0*2+BATTERY_VOLTAGE_OFFSET;
-    radioData.analogData.menu = radioData.rawData.menu*3.1/4096.0; 
-    radioData.analogData.stickUpDown = radioData.rawData.stickUpDown*3.1/4096.0;
-    radioData.analogData.stickLeftRight = radioData.rawData.stickLeftRight*3.1/4096.0;
-    radioData.analogData.slider = radioData.rawData.slider*3.1/4096.0;
+    radioData.analogData.battery = radioData.rawData.battery*ADC_REF_VOLTAGE/ADC_MAX_VALUE*2+BATTERY_VOLTAGE_OFFSET;
+    radioData.analogData.menu = radioData.rawData.menu*ADC_REF_VOLTAGE/ADC_MAX_VALUE; 
+    radioData.analogData.stickUpDown = radioData.rawData.stickUpDown*ADC_REF_VOLTAGE/ADC_MAX_VALUE;
+    radioData.analogData.stickLeftRight = radioData.rawData.stickLeftRight*ADC_REF_VOLTAGE/ADC_MAX_VALUE;
+    radioData.analogData.slider = radioData.rawData.slider*ADC_REF_VOLTAGE/ADC_MAX_VALUE;
+    radioData.analogData.sideSwitch = radioData.rawData.sideSwitch*ADC_REF_VOLTAGE/ADC_MAX_VALUE;
 
     radioData.digitalData.stickUpDown = analogToDigital(radioData.analogData.stickUpDown, radioData.analogToDigitalData.stickLimitUpDown);
     radioData.digitalData.stickLeftRight = analogToDigital(radioData.analogData.stickLeftRight, radioData.analogToDigitalData.stickLimitLeftRight);
@@ -208,7 +216,32 @@ void AnalogToDigital::doFunction()
     getMenuButton(radioData.analogData.menu, radioData.analogToDigitalData.menuButtonLimit.left, radioData.analogToDigitalData.menuButtonTolerance, changeTimeLeftMs, radioData.digitalData.left, radioData.digitalData.leftEvent);
     getMenuButton(radioData.analogData.menu, radioData.analogToDigitalData.menuButtonLimit.right, radioData.analogToDigitalData.menuButtonTolerance, changeTimeRightMs, radioData.digitalData.right, radioData.digitalData.rightEvent);
     getMenuButton(radioData.analogData.menu, radioData.analogToDigitalData.menuButtonLimit.center, radioData.analogToDigitalData.menuButtonTolerance, changeTimeCenterMs, radioData.digitalData.center, radioData.digitalData.centerEvent);
-    radioData.digitalData.sideSwitch = digitalRead(PIN_SWITCH);
+    
+    radioData.digitalData.sideSwitchEvent = false;
+    if(radioData.analogData.sideSwitch > 0.75 * ADC_REF_VOLTAGE) 
+    {
+        if(radioData.digitalData.sideSwitch != 2)
+        {
+            radioData.digitalData.sideSwitch = 2;
+            radioData.digitalData.sideSwitchEvent = true;
+        }
+    }
+    else if(radioData.analogData.sideSwitch < 0.25 * ADC_REF_VOLTAGE) 
+    {
+        if(radioData.digitalData.sideSwitch != 1)
+        {
+            radioData.digitalData.sideSwitch = 1;
+            radioData.digitalData.sideSwitchEvent = true;
+        }
+    }
+    else 
+    {
+        if(radioData.digitalData.sideSwitch != 0)
+        {
+            radioData.digitalData.sideSwitch = 0;
+            radioData.digitalData.sideSwitchEvent = true;
+        }
+    }
 
     getLongPress(radioData.digitalData.upLongPressEvent,startPressTimeUpMs,radioData.digitalData.up,radioData.digitalData.upEvent);
     getLongPress(radioData.digitalData.downLongPressEvent,startPressTimeDownMs,radioData.digitalData.down,radioData.digitalData.downEvent);

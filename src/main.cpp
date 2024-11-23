@@ -13,7 +13,9 @@
 #include "Model.hpp"
 #include "RadioMenu.hpp"
 #include "DualRate.hpp"
+#include "SensorToDigital.hpp"
 #include <nvs_flash.h>
+#include <Adafruit_MPU6050.h>
 
 /* -------------------- Defines --------------------------------------------------------------------------------*/
 #define PIN_ACCELEROMETER_SCL 17
@@ -31,6 +33,7 @@
 
 /* -------------------- Variable -------------------------------------------------------------------------------*/
 TFT_eSPI                          tft = TFT_eSPI(); 
+Adafruit_MPU6050                  mpu;
 uint32_t                          targetTime = 0;         
 RadioData                         radioData = RadioData();
 AnalogToDigital                   analogToDigital = AnalogToDigital(tft, radioData);
@@ -43,11 +46,13 @@ FunctionToChannel                 functionToChannel = FunctionToChannel(tft, rad
 Transmitter                       transmitter = Transmitter(tft, radioData);
 Model                             model = Model(tft, radioData);
 RadioMenu                         radioMenu = RadioMenu(tft, radioData, &trim);
+SensorToDigital                   sensorToDigital = SensorToDigital(tft, radioData, &mpu);
 /* -------------------- Functions Prototypes -------------------------------------------------------------------*/
 
 /* -------------------- Setup ----------------------------------------------------------------------------------*/
 void setup() {
   Serial.begin(115200);
+  Serial.println("Init started");
   // Factory Reset FLASH
   //nvs_flash_erase();      // erase the NVS partition and...
   //nvs_flash_init();       // initialize the NVS partition.
@@ -57,15 +62,18 @@ void setup() {
   radioData.loadModelData();
   //radioData.storeGlobalData();
   //radioData.storeModelData();
+  Serial.println("Model loaded");
 
   // Menu
   radioMenu.addEntry(&model);
   radioMenu.addEntry(&transmitter);
   radioMenu.addEntry(&analogToDigital);
+  radioMenu.addEntry(&sensorToDigital);
   radioMenu.addEntry(&expo);
   radioMenu.addEntry(&dualRate);
   radioMenu.addEntry(&mixer);
   radioMenu.addEntry(&functionToChannel);  
+  Serial.println("Menu created");
 
   // Power Enable (for LCD Backlight without VBUS from USB)
   pinMode(PIN_POWER_EN,OUTPUT);
@@ -81,9 +89,18 @@ void setup() {
   tft.setCursor(0, 0, 2);
   tft.setTextColor(TFT_WHITE,TFT_BLACK,true);  
   tft.setTextSize(1);
+  Serial.println("Display ready");
+
+  // MPU6050 Senosr Board
+  mpu.begin();
+  mpu.setAccelerometerRange(MPU6050_RANGE_2_G);
+  mpu.setGyroRange(MPU6050_RANGE_250_DEG);
+  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+  Serial.println("Sensor ready");
   
   // Loop Delay
   targetTime = millis() + LOOP_DELAY_MS; 
+  Serial.println("Init done");
 }
 
 /* -------------------- Main -----------------------------------------------------------------------------------*/
@@ -109,6 +126,7 @@ void loop() {
     radioMenu.showMenu();
     analogToDigital.doFunction();
     radioMenu.processInputs();
+    sensorToDigital.doFunction();
     digitalToFunction.doFunction();
     expo.doFunction();
     trim.doFunction();
@@ -116,5 +134,6 @@ void loop() {
     mixer.doFunction();
     functionToChannel.doFunction();
     transmitter.doFunction();
+    Serial.println("Alive");
   }
 }

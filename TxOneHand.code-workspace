@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "TxOneHand",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"nvs.h": "c"
+		}
+	}
+}

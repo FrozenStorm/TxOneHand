@@ -96,7 +96,15 @@ public:
         float stickLeftRight = 0;
         float slider = 0;
         float menu = 0;
+        float sideSwitch = 0;
         float battery = 0;
+        float gyroPitch = 0;
+        float gyroRoll = 0;
+        float gyroYaw = 0;
+        float accelPitch = 0;
+        float accelRoll = 0;
+        float accelYaw = 0;
+        float altitude = 0;
     };
     RawData rawData;
 
@@ -106,7 +114,18 @@ public:
         float stickLeftRight = 0;
         float slider = 0;
         float menu = 0;
+        float sideSwitch = 0;
         float battery = 0; 
+        float gyroPitch = 0;
+        float gyroRoll = 0;
+        float gyroYaw = 0;
+        float accelPitch = 0;
+        float accelRoll = 0;
+        float accelYaw = 0;
+        float pitch = 0;
+        float roll = 0;
+        float yaw = 0;
+        float altitude = 0;
     };
     AnalogData analogData;
     
@@ -116,7 +135,8 @@ public:
         float stickLeftRight = 0;
         float slider = 0;
 
-        bool sideSwitch = 0;
+        int sideSwitch = 0;
+        bool sideSwitchEvent = 0;
 
         bool left = 0;
         bool right = 0;
@@ -136,10 +156,11 @@ public:
         bool downLongPressEvent = 0;
         bool centerLongPressEvent = 0;
 
-        float altitude = 0;
-        float heading = 0;
         float pitch = 0;
         float roll = 0;
+        float yaw = 0;
+        float altitude = 0;
+        float temperature = 0;
     };
     DigitalData digitalData;
 
