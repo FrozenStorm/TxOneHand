@@ -679,6 +679,7 @@ void RadioData::storeModelData()
         return;
     }
 
+    // TODO move analogToDigitalData to global
     pref.putFloat("atdd.slud.min", analogToDigitalData.stickLimitUpDown.min);
     pref.putFloat("atdd.slud.max", analogToDigitalData.stickLimitUpDown.max);
     pref.putFloat("atdd.slud.cen", analogToDigitalData.stickLimitUpDown.center);

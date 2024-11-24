@@ -108,35 +108,31 @@ void setup() {
 
 /* -------------------- Main -----------------------------------------------------------------------------------*/
 void loop() {
-  /*
-  static uint32_t lastCall = millis();
+  uint32_t startTime = millis();
   char myString[20];
-  uint32_t deltaT = 0;
+  static uint32_t deltaTime = 0;
   static uint32_t maxHold = 0;
- */
   
-  if (targetTime < millis()) {
-    /*
-    deltaT = millis()-lastCall;
-    lastCall = lastCall + deltaT;
-    if(deltaT > maxHold) maxHold = deltaT;
-    sprintf(myString,"%3d/%dms", deltaT, maxHold);
-    tft.setTextDatum(TR_DATUM);
-    tft.drawString(myString,tft.width(),15,2);   
-    */
-
+  if (targetTime < millis()) {    
     targetTime += LOOP_DELAY_MS;
-    radioMenu.showMenu();
-    analogToDigital.doFunction();
-    radioMenu.processInputs();
-    sensorToDigital.doFunction();
-    digitalToFunction.doFunction();
-    expo.doFunction();
-    trim.doFunction();
-    dualRate.doFunction();
-    mixer.doFunction();
-    functionToChannel.doFunction();
-    transmitter.doFunction();
-    Serial.println("Alive");
+    
+    radioMenu.showMenu(); // 6ms 
+    sprintf(myString,"%3d,%3d/%3d", deltaTime, maxHold, LOOP_DELAY_MS-deltaTime);
+    //tft.setTextDatum(TC_DATUM);
+    //tft.drawString(myString,tft.width()/2,0,2); 
+
+    analogToDigital.doFunction(); // 3ms
+    radioMenu.processInputs(); // <<1ms
+    sensorToDigital.doFunction(); // 4ms
+    digitalToFunction.doFunction(); // <<1ms
+    expo.doFunction(); // <<1ms
+    trim.doFunction(); // <<1ms
+    dualRate.doFunction(); // <<1ms
+    mixer.doFunction(); // <<1ms
+    functionToChannel.doFunction(); // <<1ms
+    transmitter.doFunction(); // <<1ms
+
+    deltaTime = millis()-startTime;
+    if(deltaTime > maxHold) maxHold = deltaTime;
   }
 }

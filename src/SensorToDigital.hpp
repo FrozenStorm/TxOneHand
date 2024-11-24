@@ -11,13 +11,13 @@
 class SensorToDigital : public RadioClass
 {
 private:
-    enum MenuEntries{PREASURE_AT_SEALEVEL, NUMBER_OF_MENUENTRIES};
+    enum MenuEntries{PREASURE_AT_SEALEVEL, FILTER_RATE, GYRO_RATE, NUMBER_OF_MENUENTRIES};
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
 
     Adafruit_MPU6050*   mpu;
     Adafruit_BMP085*    bmp;
-    float               filterRate = 0.5;                
-    float               gyroRate = 0.01;
+    float               filterRate = 0.8;                
+    float               gyroRate = 0.02;
     struct AngleLimit{
         float delta;
         float center;
@@ -95,7 +95,13 @@ bool SensorToDigital::left()
     switch (selectedMenuEntry)
     {
     case PREASURE_AT_SEALEVEL:
-            radioData.sensorToDigitalData.seaLevelPressure -= 10;
+            if(radioData.sensorToDigitalData.seaLevelPressure > 10) radioData.sensorToDigitalData.seaLevelPressure -= 10;
+        break;
+    case FILTER_RATE:
+            if(filterRate > 0.02) filterRate -= 0.02;
+        break;
+    case GYRO_RATE:
+            if(gyroRate > 0.01) gyroRate -= 0.01;
         break;
     case NUMBER_OF_MENUENTRIES:
         return true;
@@ -110,7 +116,13 @@ bool SensorToDigital::right()
     switch (selectedMenuEntry)
     {
     case PREASURE_AT_SEALEVEL:
-        radioData.sensorToDigitalData.seaLevelPressure += 10;
+        if(radioData.sensorToDigitalData.seaLevelPressure < 2000) radioData.sensorToDigitalData.seaLevelPressure += 10;
+        break;
+    case FILTER_RATE:
+            if(filterRate < 1) filterRate += 0.02;
+        break;
+    case GYRO_RATE:
+            if(gyroRate < 1) gyroRate += 0.01;
         break;
     case NUMBER_OF_MENUENTRIES:
         return true;
@@ -128,7 +140,7 @@ void SensorToDigital::center()
 void SensorToDigital::doFunction()
 {
     sensors_event_t accel, gyro, temp;
-    mpu->getEvent(&accel, &gyro, &temp);
+    mpu->getEvent(&accel, &gyro, &temp); // 3ms
 
     radioData.rawData.gyroPitch = gyro.gyro.z;
     radioData.rawData.gyroRoll = gyro.gyro.y;
@@ -143,8 +155,8 @@ void SensorToDigital::doFunction()
     radioData.analogData.accelRoll = atan2(radioData.rawData.accelPitch, radioData.rawData.accelYaw) * 180 / PI;
     // TODO radioData.analogData.accelYaw = .........
 
-    radioData.analogData.pitch = filterRate * (radioData.analogData.accelPitch + radioData.analogData.gyroPitch * gyroRate) + (1 - filterRate) * radioData.analogData.accelPitch;
-    radioData.analogData.roll = filterRate * (radioData.analogData.accelRoll + radioData.analogData.gyroRoll * gyroRate) + (1 - filterRate) * radioData.analogData.accelRoll;
+    radioData.analogData.pitch = filterRate * (radioData.analogData.pitch + radioData.analogData.gyroPitch * gyroRate) + (1 - filterRate) * radioData.analogData.accelPitch;
+    radioData.analogData.roll = filterRate * (radioData.analogData.roll + radioData.analogData.gyroRoll * gyroRate) + (1 - filterRate) * radioData.analogData.accelRoll;
     // Neues Zentrum setzen wenn der Schalter umgelegt wird.
     if(radioData.digitalData.sideSwitch == 1 && radioData.digitalData.sideSwitchEvent == true)
     {
@@ -156,8 +168,11 @@ void SensorToDigital::doFunction()
     radioData.digitalData.roll = analogToDigital(radioData.analogData.roll, angleLimitRoll);
     // TODO radioData.digitalData.yaw = .............
 
-    radioData.digitalData.altitude = filterRate * bmp->readAltitude(radioData.sensorToDigitalData.seaLevelPressure * 100) + (1 - filterRate) * radioData.digitalData.altitude;
-    radioData.digitalData.temperature = bmp->readTemperature();
+    // TODO 90 degree flip fix
+
+    // Removed because very long execution time
+    //radioData.digitalData.altitude = filterRate * bmp->readAltitude(radioData.sensorToDigitalData.seaLevelPressure * 100) + (1 - filterRate) * radioData.digitalData.altitude; // 37 ms
+    //radioData.digitalData.temperature = bmp->readTemperature(); // 7ms
 }
 
 void SensorToDigital::showValue()
