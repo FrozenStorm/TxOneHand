@@ -10,8 +10,8 @@ class RadioClass
 {
 
 protected:
-    TFT_eSPI& tft;
-    RadioData& radioData;
+    static TFT_eSPI& tft = TFT_eSPI();
+    RadioData& radioData = RadioData::getInstance();
     char myString[40] = "Menu Text";
     int posH = 320/2;
     int posW = 20;
@@ -19,7 +19,7 @@ protected:
     void drawMenuPointer(int selectedMenuEntry, int numberOfMenuEntries);
     void limitValue(float& value);
 public:
-    RadioClass(TFT_eSPI& newTft, RadioData& newRadioData): tft(newTft), radioData(newRadioData){}
+    RadioClass(){};
     virtual void doFunction();
     virtual void showMenu();
     virtual void showValue();

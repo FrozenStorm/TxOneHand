@@ -8,15 +8,15 @@
 
 #define BATTERY_WARNING_VOLTAGE 3.7
 
-class RadioMenu
+class RadioMenu : public RadioClass
 {
 private:
     TFT_eSPI&                          tft;
     std::list<RadioClass*>             menuPoints;
     std::list<RadioClass*>::iterator   menuPointer;
-    RadioData& radioData;
+    RadioData& radioData = RadioData::getInstance();
 public:
-    RadioMenu(TFT_eSPI& newTft, RadioData& newDigitalValues, RadioClass* menuEntry);
+    RadioMenu(): RadioClass(){}
     void addEntry(RadioClass* menuEntry);
     void showMenu();
     void nextEntry();
@@ -24,15 +24,10 @@ public:
     void processInputs();
 };
 
-RadioMenu::RadioMenu(TFT_eSPI& newTft, RadioData& newRadioData, RadioClass* menuEntry) : tft(newTft), radioData(newRadioData)
-{
-        menuPoints.push_back(menuEntry);
-        menuPointer = menuPoints.begin();    
-}
-
 void RadioMenu::addEntry(RadioClass* menuEntry)
 {
     menuPoints.push_back(menuEntry);
+    if(menuPointer == menuPoints.end()) menuPointer = menuPoints.begin();  
 }
 
 void RadioMenu::showMenu()

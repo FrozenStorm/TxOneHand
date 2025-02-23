@@ -13,7 +13,7 @@ private:
     unsigned int modelNameInputCharacter = 0;
 
 public:
-    Model(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
+    Model() : RadioClass(){}
     void doFunction();
 
     void showMenu();

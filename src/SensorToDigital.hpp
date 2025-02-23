@@ -14,8 +14,8 @@ private:
     enum MenuEntries{PREASURE_AT_SEALEVEL, FILTER_RATE, GYRO_RATE, NUMBER_OF_MENUENTRIES};
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
 
-    Adafruit_MPU6050*   mpu;
-    Adafruit_BMP085*    bmp;
+    Adafruit_MPU6050   mpu;
+    Adafruit_BMP085    bmp;
     float               filterRate = 0.8;                
     float               gyroRate = 0.02;
     struct AngleLimit{
@@ -29,10 +29,9 @@ private:
     float analogToDigital(float value, const AngleLimit& limit);
     
 public:
-    SensorToDigital(TFT_eSPI& newTft, RadioData& newRadioData, Adafruit_MPU6050* newMpu, Adafruit_BMP085* newBmp);
+    SensorToDigital();
     void doFunction();
     void showValue();
-
     void showMenu();
     const char * getTitle();
     void up();
@@ -42,10 +41,13 @@ public:
     void center();
 };
 
-SensorToDigital::SensorToDigital(TFT_eSPI& newTft, RadioData& newRadioData, Adafruit_MPU6050* newMpu, Adafruit_BMP085* newBmp):RadioClass(newTft, newRadioData)
+SensorToDigital::SensorToDigital() : RadioClass()
 {
-    mpu = newMpu;
-    bmp = newBmp;
+    mpu.begin();
+    mpu.setAccelerometerRange(MPU6050_RANGE_2_G);
+    mpu.setGyroRange(MPU6050_RANGE_250_DEG);
+    mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+    bmp.begin();
 }
 
 void SensorToDigital::showMenu()
@@ -140,7 +142,7 @@ void SensorToDigital::center()
 void SensorToDigital::doFunction()
 {
     sensors_event_t accel, gyro, temp;
-    mpu->getEvent(&accel, &gyro, &temp); // 3ms
+    mpu.getEvent(&accel, &gyro, &temp); // 3ms
 
     radioData.rawData.gyroPitch = gyro.gyro.z;
     radioData.rawData.gyroRoll = gyro.gyro.y;

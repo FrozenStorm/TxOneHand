@@ -15,7 +15,7 @@ private:
     void drawStick(int posW, int posH, int rad, float valueW, float valueH);
     void drawSlider(int posW, int posH, int lenW, int lenH, float value);
 public:
-    Trim(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
+    Trim() : RadioClass(){}
     void doFunction() override;
     void showMenu() override;
     void up() override;

@@ -11,7 +11,7 @@ private:
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
     int selectedMenuChannel = 0;
 public:
-    FunctionToChannel(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
+    FunctionToChannel() : RadioClass(){}
     void doFunction() override;
     void showMenu() override;
     void up() override;

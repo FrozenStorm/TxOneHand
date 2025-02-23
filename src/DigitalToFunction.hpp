@@ -8,7 +8,7 @@ class DigitalToFunction : public RadioClass
 {
 private:
 public:
-    DigitalToFunction(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
+    DigitalToFunction() : RadioClass(){}
     void doFunction() override;
     void showMenu() override;
     void up() override;

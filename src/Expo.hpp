@@ -12,7 +12,7 @@ private:
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
     void calcExpo(float& value, const float expo);
 public:
-    Expo(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
+    Expo() : RadioClass(){}
     void doFunction();
 
     void showMenu();

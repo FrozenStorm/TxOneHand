@@ -11,7 +11,7 @@ private:
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
     void calcRate(float& value, float rate);
 public:
-    DualRate(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
+    DualRate() : RadioClass(){}
     void doFunction();
 
     void showMenu();

@@ -11,7 +11,7 @@ private:
     MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
 
 public:
-    Mixer(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
+    Mixer() : RadioClass(){}
     void doFunction();
 
     void showMenu();

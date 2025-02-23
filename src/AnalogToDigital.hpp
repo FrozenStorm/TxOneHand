@@ -36,7 +36,7 @@ private:
     float analogToDigital(float value, const RadioData::AnalogToDigitalData::StickLimit& limit);
     void getLongPress(bool& longPressEvent, unsigned int& startTimeMs, const bool& state, const bool& event);
 public:
-    AnalogToDigital(TFT_eSPI& newTft, RadioData& newRadioData);
+    AnalogToDigital();
     void doFunction();
     void showValue();
 
@@ -168,7 +168,7 @@ void AnalogToDigital::center()
     }
 }
 
-AnalogToDigital::AnalogToDigital(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData)
+AnalogToDigital::AnalogToDigital() : RadioClass()
 {
     analogSetAttenuation(ADC_11db); // 0 mV ~ 3100 mV
     //analogReadResolution(16); // Effective ADC resolution 13 bits

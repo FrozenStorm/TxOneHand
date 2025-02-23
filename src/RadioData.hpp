@@ -626,18 +626,15 @@ public:
 
     char* getModelName(void);
     
-    RadioData(/* args */);
-    ~RadioData();
+    static RadioData& RadioData::getInstance()
+    {
+        static RadioData obj;
+        return obj;
+    }
+
+    RadioData(){};
+
 };
-
-RadioData::RadioData(/* args */)
-{
- 
-}
-
-RadioData::~RadioData()
-{
-}
 
 char* RadioData::getModelName(void)
 {
