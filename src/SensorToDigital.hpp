@@ -11,9 +11,6 @@
 class SensorToDigital : public RadioClass
 {
 private:
-    enum MenuEntries{PREASURE_AT_SEALEVEL, FILTER_RATE, GYRO_RATE, NUMBER_OF_MENUENTRIES};
-    MenuEntries selectedMenuEntry = NUMBER_OF_MENUENTRIES;
-
     Adafruit_MPU6050*   mpu;
     Adafruit_BMP085*    bmp;
     float               filterRate = 0.8;                
@@ -29,112 +26,14 @@ private:
     float analogToDigital(float value, const AngleLimit& limit);
     
 public:
-    SensorToDigital(TFT_eSPI& newTft, RadioData& newRadioData, Adafruit_MPU6050* newMpu, Adafruit_BMP085* newBmp);
+    SensorToDigital(RadioData& newRadioData, Adafruit_MPU6050* newMpu, Adafruit_BMP085* newBmp);
     void doFunction();
-    void showValue();
-
-    void showMenu();
-    const char * getTitle();
-    void up();
-    void down();
-    bool left();
-    bool right();
-    void center();
 };
 
-SensorToDigital::SensorToDigital(TFT_eSPI& newTft, RadioData& newRadioData, Adafruit_MPU6050* newMpu, Adafruit_BMP085* newBmp):RadioClass(newTft, newRadioData)
+SensorToDigital::SensorToDigital(RadioData& newRadioData, Adafruit_MPU6050* newMpu, Adafruit_BMP085* newBmp):RadioClass(newRadioData)
 {
     mpu = newMpu;
     bmp = newBmp;
-}
-
-void SensorToDigital::showMenu()
-{
-    sprintf(myString,"Pre. Seal. = %4.0fhPa\n", radioData.sensorToDigitalData.seaLevelPressure);
-    tft.drawString(myString, posW, posH+incH*0);
-
-    sprintf(myString,"filterRate = %1.2f\n", filterRate);
-    tft.drawString(myString, posW, posH+incH*1);
-
-    sprintf(myString,"gyroRate = %1.2f\n", gyroRate);
-    tft.drawString(myString, posW, posH+incH*2);
-
-    sprintf(myString,"Pitch = %4.1f\n", radioData.digitalData.pitch);
-    tft.drawString(myString, posW, posH+incH*3);
-
-    sprintf(myString,"Roll = %4.1f\n", radioData.digitalData.roll);
-    tft.drawString(myString, posW, posH+incH*4);
-
-    sprintf(myString,"Yaw = %3.2f\n", radioData.digitalData.yaw);
-    tft.drawString(myString, posW, posH+incH*5);
-
-    sprintf(myString,"Altitude = %4.0fm\n", radioData.digitalData.altitude);
-    tft.drawString(myString, posW, posH+incH*6);
-
-    sprintf(myString,"Temperature = %2.1fC\n", radioData.digitalData.temperature);
-    tft.drawString(myString, posW, posH+incH*7);
-
-    drawMenuPointer(selectedMenuEntry,NUMBER_OF_MENUENTRIES);
-}
-const char * SensorToDigital::getTitle()
-{
-    return "S-To-D";
-}
-void SensorToDigital::up()
-{
-    if(selectedMenuEntry > 0) selectedMenuEntry=(MenuEntries)(selectedMenuEntry-1);
-    else selectedMenuEntry = NUMBER_OF_MENUENTRIES;
-}
-void SensorToDigital::down()
-{
-    if(selectedMenuEntry < NUMBER_OF_MENUENTRIES) selectedMenuEntry=(MenuEntries)(selectedMenuEntry+1);
-    else selectedMenuEntry = (MenuEntries)0;
-}
-bool SensorToDigital::left()
-{
-    switch (selectedMenuEntry)
-    {
-    case PREASURE_AT_SEALEVEL:
-            if(radioData.sensorToDigitalData.seaLevelPressure > 10) radioData.sensorToDigitalData.seaLevelPressure -= 10;
-        break;
-    case FILTER_RATE:
-            if(filterRate > 0.02) filterRate -= 0.02;
-        break;
-    case GYRO_RATE:
-            if(gyroRate > 0.01) gyroRate -= 0.01;
-        break;
-    case NUMBER_OF_MENUENTRIES:
-        return true;
-        break;
-    default:
-        break;
-    }
-    return false;
-}
-bool SensorToDigital::right()
-{
-    switch (selectedMenuEntry)
-    {
-    case PREASURE_AT_SEALEVEL:
-        if(radioData.sensorToDigitalData.seaLevelPressure < 2000) radioData.sensorToDigitalData.seaLevelPressure += 10;
-        break;
-    case FILTER_RATE:
-            if(filterRate < 1) filterRate += 0.02;
-        break;
-    case GYRO_RATE:
-            if(gyroRate < 1) gyroRate += 0.01;
-        break;
-    case NUMBER_OF_MENUENTRIES:
-        return true;
-        break;
-    default:
-        break;
-    }
-    return false;
-}
-void SensorToDigital::center()
-{
-
 }
 
 void SensorToDigital::doFunction()
@@ -173,11 +72,6 @@ void SensorToDigital::doFunction()
     // Removed because very long execution time
     //radioData.digitalData.altitude = filterRate * bmp->readAltitude(radioData.sensorToDigitalData.seaLevelPressure * 100) + (1 - filterRate) * radioData.digitalData.altitude; // 37 ms
     //radioData.digitalData.temperature = bmp->readTemperature(); // 7ms
-}
-
-void SensorToDigital::showValue()
-{
-    
 }
 
 float SensorToDigital::analogToDigital(float value, const AngleLimit& limit)

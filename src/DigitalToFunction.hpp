@@ -8,24 +8,9 @@ class DigitalToFunction : public RadioClass
 {
 private:
 public:
-    DigitalToFunction(TFT_eSPI& newTft, RadioData& newRadioData) : RadioClass(newTft, newRadioData){}
+    DigitalToFunction(RadioData& newRadioData) : RadioClass(newRadioData){}
     void doFunction() override;
-    void showMenu() override;
-    void up() override;
-    void down() override;
-    bool left() override;
-    bool right() override;
-    void center() override;
-
-    void showValue();
-    const char * getTitle();
 };
-
-void DigitalToFunction::showValue(){};
-const char * DigitalToFunction::getTitle()
-{
-    return "DigitalToFunction";
-}
 
 void DigitalToFunction::doFunction()
 {
@@ -43,38 +28,4 @@ void DigitalToFunction::doFunction()
     }
 
 }
-
-
-void DigitalToFunction::up() 
-{
-
-}
-
-void DigitalToFunction::down()
-{
-
-}
-
-bool DigitalToFunction::left()
-{
-    return true;
-}
-
-bool DigitalToFunction::right()
-{
-    return true;
-}
-
-void DigitalToFunction::center()
-{
-
-}
-
-
-void DigitalToFunction::showMenu()
-{
-
-}
-
-
 #endif
