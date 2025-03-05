@@ -15,15 +15,8 @@ private:
     Adafruit_BMP085*    bmp;
     float               filterRate = 0.8;                
     float               gyroRate = 0.02;
-    struct AngleLimit{
-        float delta;
-        float center;
-    };
-    AngleLimit angleLimitPitch = {.delta = 45, .center = 0};
-    AngleLimit angleLimitRoll = {.delta = 45, .center = 0};
-    // TODO  AngleLimit angleLimitYaw = {.delta = 45, .center = 0};
 
-    float analogToDigital(float value, const AngleLimit& limit);
+    float analogToDigital(float value, const RadioData::SensorToDigitalData::AngleLimit& limit);
     
 public:
     SensorToDigital(RadioData& newRadioData, Adafruit_MPU6050* newMpu, Adafruit_BMP085* newBmp);
@@ -56,15 +49,9 @@ void SensorToDigital::doFunction()
 
     radioData.analogData.pitch = filterRate * (radioData.analogData.pitch + radioData.analogData.gyroPitch * gyroRate) + (1 - filterRate) * radioData.analogData.accelPitch;
     radioData.analogData.roll = filterRate * (radioData.analogData.roll + radioData.analogData.gyroRoll * gyroRate) + (1 - filterRate) * radioData.analogData.accelRoll;
-    // Neues Zentrum setzen wenn der Schalter umgelegt wird.
-    if(radioData.digitalData.sideSwitch == 1 && radioData.digitalData.sideSwitchEvent == true)
-    {
-        angleLimitPitch.center = radioData.analogData.pitch;
-        angleLimitRoll.center = radioData.analogData.roll;
-        // TODO angleLimitYaw.center = radioData.analogData.yaw;
-    }     
-    radioData.digitalData.pitch = analogToDigital(radioData.analogData.pitch, angleLimitPitch);
-    radioData.digitalData.roll = analogToDigital(radioData.analogData.roll, angleLimitRoll);
+    
+    radioData.digitalData.pitch = analogToDigital(radioData.analogData.pitch, radioData.sensorToDigitalData.angleLimitPitch);
+    radioData.digitalData.roll = analogToDigital(radioData.analogData.roll, radioData.sensorToDigitalData.angleLimitRoll);
     // TODO radioData.digitalData.yaw = .............
 
     // TODO 90 degree flip fix
@@ -74,7 +61,7 @@ void SensorToDigital::doFunction()
     //radioData.digitalData.temperature = bmp->readTemperature(); // 7ms
 }
 
-float SensorToDigital::analogToDigital(float value, const AngleLimit& limit)
+float SensorToDigital::analogToDigital(float value, const RadioData::SensorToDigitalData::AngleLimit& limit)
 {
     // Offset wegrechnen
     value = value - limit.center;

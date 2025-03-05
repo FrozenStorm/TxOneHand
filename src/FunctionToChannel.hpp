@@ -12,12 +12,7 @@ public:
 };
 
 void FunctionToChannel::doFunction()
-{
-    float vtail_left = (-radioData.functionData.roll - radioData.functionData.pitch);
-    limitValue(vtail_left);
-    float vtail_right = (-radioData.functionData.roll + radioData.functionData.pitch);
-    limitValue(vtail_right);  
-  
+{  
     for(int i = 0; i < SUPPORTED_CHANNELS; i++){
         float value;
         switch(radioData.functionToChannelData.functionOnChannel[i])
@@ -32,10 +27,10 @@ void FunctionToChannel::doFunction()
                 value = radioData.functionData.roll;
                 break;
             case radioData.VTAIL_LEFT:
-                value = vtail_left;
+                value = radioData.functionData.vTailLeft;
                 break;
             case radioData.VTAIL_RIGHT:
-                value = vtail_right;
+                value = radioData.functionData.vTailRight;
                 break;
             case radioData.THROTTLE:
                 value = radioData.functionData.throttle;

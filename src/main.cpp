@@ -17,7 +17,7 @@
 #include <Adafruit_BMP085.h>
 
 /* -------------------- Defines --------------------------------------------------------------------------------*/
-#define PIN_ACCELEROMETER_SCL 17
+#define PIN_ACCELEROMETER_SCL 16
 #define PIN_ACCELEROMETER_SDA 18
 #define PIN_GPS_TX            12
 #define PIN_GPS_RX            13
@@ -64,6 +64,7 @@ void setup() {
 
 
   // MPU6050 Senosr Board
+  Wire.begin(PIN_ACCELEROMETER_SDA,PIN_ACCELEROMETER_SCL);
   mpu.begin();
   mpu.setAccelerometerRange(MPU6050_RANGE_2_G);
   mpu.setGyroRange(MPU6050_RANGE_250_DEG);
@@ -77,7 +78,7 @@ void setup() {
 }
 
 /* -------------------- Main -----------------------------------------------------------------------------------*/
-void loop() {
+void loop() { // Core 1
   if (targetTime < millis()) {    
     targetTime += LOOP_DELAY_MS;
 

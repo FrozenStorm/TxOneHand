@@ -27,23 +27,19 @@ public:
         };
         StickLimit stickLimitUpDown;
         StickLimit stickLimitLeftRight;
-        StickLimit stickLimitSlider;
 
-        struct MenuButtonLimit
-        {
-            float up;
-            float down;
-            float left;
-            float right;
-            float center;
-        };
-        MenuButtonLimit menuButtonLimit;
-        float menuButtonTolerance;
         int longPressDurationMs;
     };
     AnalogToDigitalData analogToDigitalData;
 
     struct SensorToDigitalData{
+        struct AngleLimit{
+            float delta;
+            float center;
+        };
+        AngleLimit angleLimitPitch = {.delta = 45, .center = 0};
+        AngleLimit angleLimitRoll = {.delta = 45, .center = 0};
+        // TODO  AngleLimit angleLimitYaw = {.delta = 45, .center = 0}
         float seaLevelPressure;
     };
     SensorToDigitalData sensorToDigitalData;
@@ -66,9 +62,8 @@ public:
 
     struct TrimData
     {
-        int roll;
-        int pitch;
-        int throttle;
+        float roll;
+        float pitch;
     };
     TrimData trimData;
 
@@ -94,9 +89,6 @@ public:
     {
         float stickUpDown = 0;
         float stickLeftRight = 0;
-        float slider = 0;
-        float menu = 0;
-        float sideSwitch = 0;
         float battery = 0;
         float gyroPitch = 0;
         float gyroRoll = 0;
@@ -111,9 +103,6 @@ public:
     {
         float stickUpDown = 0;
         float stickLeftRight = 0;
-        float slider = 0;
-        float menu = 0;
-        float sideSwitch = 0;
         float battery = 0; 
         float gyroPitch = 0;
         float gyroRoll = 0;
@@ -131,28 +120,15 @@ public:
     {
         float stickUpDown = 0;
         float stickLeftRight = 0;
-        float slider = 0;
 
-        int sideSwitch = 0;
-        bool sideSwitchEvent = 0;
+        bool arm = 0;
+        bool trim = 0;
 
-        bool left = 0;
-        bool right = 0;
-        bool up = 0;
-        bool down = 0;
-        bool center = 0;
-        
-        bool leftEvent = 0;
-        bool rightEvent = 0;
-        bool upEvent = 0;
-        bool downEvent = 0;
-        bool centerEvent = 0;
+        bool armEvent = 0;
+        bool trimEvent = 0;
 
-        bool leftLongPressEvent = 0;
-        bool rightLongPressEvent = 0;
-        bool upLongPressEvent = 0;
-        bool downLongPressEvent = 0;
-        bool centerLongPressEvent = 0;
+        bool armLongPressEvent = 0;
+        bool trimLongPressEvent = 0;
 
         float pitch = 0;
         float roll = 0;
@@ -167,6 +143,9 @@ public:
         float pitch = 0;
         float roll = 0;
         float throttle = 0;
+        bool armed = 0;
+        float vTailLeft = 0;
+        float vTailRight = 0;
     };
     FunctionData functionData;
     
@@ -690,21 +669,12 @@ void RadioData::storeModelData()
     pref.putFloat("atdd.sllr.cen", analogToDigitalData.stickLimitLeftRight.center);
     pref.putBool("atdd.sllr.inv", analogToDigitalData.stickLimitLeftRight.invert);
 
-    pref.putFloat("atdd.sls.min", analogToDigitalData.stickLimitSlider.min);
-    pref.putFloat("atdd.sls.max", analogToDigitalData.stickLimitSlider.max);
-    pref.putFloat("atdd.sls.cen", analogToDigitalData.stickLimitSlider.center);
-    pref.putBool("atdd.sls.inv", analogToDigitalData.stickLimitSlider.invert);
-
-    pref.putFloat("atdd.mbl.up", analogToDigitalData.menuButtonLimit.up);
-    pref.putFloat("atdd.mbl.dow", analogToDigitalData.menuButtonLimit.down);
-    pref.putFloat("atdd.mbl.lef", analogToDigitalData.menuButtonLimit.left);
-    pref.putFloat("atdd.mbl.rig", analogToDigitalData.menuButtonLimit.right);
-    pref.putFloat("atdd.mbl.cen", analogToDigitalData.menuButtonLimit.center);
-
-    pref.putFloat("atdd.mbt", analogToDigitalData.menuButtonTolerance);
-
     pref.putInt("atdd.lpdm", analogToDigitalData.longPressDurationMs);
 
+    pref.putFloat("atdd.alp.d", sensorToDigitalData.angleLimitPitch.delta);
+    pref.putFloat("atdd.alp.c", sensorToDigitalData.angleLimitPitch.center);
+    pref.putFloat("atdd.alr.d", sensorToDigitalData.angleLimitRoll.delta);
+    pref.putFloat("atdd.alr.c", sensorToDigitalData.angleLimitRoll.center);
     pref.putFloat("stdd.slp", sensorToDigitalData.seaLevelPressure);
     
     pref.putFloat("ed.rol", expoData.roll);
@@ -717,7 +687,6 @@ void RadioData::storeModelData()
 
     pref.putFloat("td.rol", trimData.roll);
     pref.putFloat("td.pit", trimData.pitch);
-    pref.putFloat("td.thr", trimData.throttle); 
 
     pref.putFloat("md.ttp", mixerData.throttleToPitch);
 
@@ -759,7 +728,6 @@ void RadioData::storeTrimData()
 
     pref.putFloat("td.rol", trimData.roll);
     pref.putFloat("td.pit", trimData.pitch);
-    pref.putFloat("td.thr", trimData.throttle); 
     
     Serial.printf("Model-%d entries left = %u\n", selectedModel, pref.freeEntries());
     pref.end();    
@@ -798,21 +766,12 @@ void RadioData::loadModelData()
     analogToDigitalData.stickLimitLeftRight.center = pref.getFloat("atdd.sllr.cen", 1.49);
     analogToDigitalData.stickLimitLeftRight.invert = pref.getBool("atdd.sllr.inv", false);
 
-    analogToDigitalData.stickLimitSlider.min = pref.getFloat("atdd.sls.min", 0.0);
-    analogToDigitalData.stickLimitSlider.max = pref.getFloat("atdd.sls.max", 1.32);
-    analogToDigitalData.stickLimitSlider.center = pref.getFloat("atdd.sls.cen", 0.65);
-    analogToDigitalData.stickLimitSlider.invert = pref.getBool("atdd.sls.inv", true);
-
-    analogToDigitalData.menuButtonLimit.up = pref.getFloat("atdd.mbl.up", 1.67);
-    analogToDigitalData.menuButtonLimit.down = pref.getFloat("atdd.mbl.dow", 0.53);
-    analogToDigitalData.menuButtonLimit.left = pref.getFloat("atdd.mbl.lef", 0.38);
-    analogToDigitalData.menuButtonLimit.right = pref.getFloat("atdd.mbl.rig", 1.38);
-    analogToDigitalData.menuButtonLimit.center = pref.getFloat("atdd.mbl.cen", 0.96);
-
-    analogToDigitalData.menuButtonTolerance = pref.getFloat("atdd.mbt", 0.1);
-
     analogToDigitalData.longPressDurationMs = pref.getInt("atdd.lpdm", 600);
 
+    sensorToDigitalData.angleLimitPitch.delta = pref.getInt("atdd.alp.d",45);
+    sensorToDigitalData.angleLimitPitch.center = pref.getInt("atdd.alp.c",0);
+    sensorToDigitalData.angleLimitRoll.delta = pref.getInt("atdd.alr.d",45);
+    sensorToDigitalData.angleLimitRoll.center = pref.getInt("atdd.alr.c",0);
     sensorToDigitalData.seaLevelPressure = pref.getFloat("stdd.slp", 1013.25);
     
     expoData.roll = pref.getFloat("ed.rol", 0.3);
@@ -825,7 +784,6 @@ void RadioData::loadModelData()
 
     trimData.roll = pref.getFloat("td.rol", 0);
     trimData.pitch = pref.getFloat("td.pit", 0);
-    trimData.throttle = pref.getFloat("td.thr", 0); 
 
     mixerData.throttleToPitch = pref.getFloat("md.ttp", 0);
 
