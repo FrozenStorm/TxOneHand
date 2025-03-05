@@ -12,6 +12,7 @@
 #include "Model.hpp"
 #include "DualRate.hpp"
 #include "SensorToDigital.hpp"
+#include "Web.hpp"
 #include <nvs_flash.h>
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_BMP085.h>
@@ -71,6 +72,9 @@ void setup() {
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
   bmp.begin();
   Serial.println("Sensor ready");
+
+  // Init Web
+  taskInitWeb();
   
   // Loop Delay
   targetTime = millis() + LOOP_DELAY_MS; 
@@ -93,11 +97,11 @@ void loop() { // Core 1
     functionToChannel.doFunction(); // <<1ms
     transmitter.doFunction(); // <<1ms
 
-
     slowDown +=1;
     if(slowDown % 20 == 0)
     {
       Serial.println("-----------------------------------------------");
+      Serial.print("AP IP-Adresse = ");Serial.println(WiFi.softAPIP());
       Serial.print("radioData.analogData.battery = "); Serial.println(radioData.analogData.battery);
       Serial.println("****");
       Serial.print("radioData.digitalData.stickLeftRight = "); Serial.println(radioData.digitalData.stickLeftRight);

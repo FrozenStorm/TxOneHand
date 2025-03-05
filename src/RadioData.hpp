@@ -643,6 +643,16 @@ void RadioData::storeGlobalData()
         return;
     }
     pref.putUInt("sm", selectedModel);
+
+    pref.putFloat("atdd.slud.min", analogToDigitalData.stickLimitUpDown.min);
+    pref.putFloat("atdd.slud.max", analogToDigitalData.stickLimitUpDown.max);
+    pref.putFloat("atdd.slud.cen", analogToDigitalData.stickLimitUpDown.center);
+    pref.putBool("atdd.slud.inv", analogToDigitalData.stickLimitUpDown.invert);
+
+    pref.putFloat("atdd.sllr.min", analogToDigitalData.stickLimitLeftRight.min);
+    pref.putFloat("atdd.sllr.max", analogToDigitalData.stickLimitLeftRight.max);
+    pref.putFloat("atdd.sllr.cen", analogToDigitalData.stickLimitLeftRight.center);
+    pref.putBool("atdd.sllr.inv", analogToDigitalData.stickLimitLeftRight.invert);
     Serial.printf("Global entries left = %u\n", pref.freeEntries());
     pref.end();
 }
@@ -657,17 +667,6 @@ void RadioData::storeModelData()
         Serial.printf("storeModelData %s begin error", name);
         return;
     }
-
-    // TODO move analogToDigitalData to global
-    pref.putFloat("atdd.slud.min", analogToDigitalData.stickLimitUpDown.min);
-    pref.putFloat("atdd.slud.max", analogToDigitalData.stickLimitUpDown.max);
-    pref.putFloat("atdd.slud.cen", analogToDigitalData.stickLimitUpDown.center);
-    pref.putBool("atdd.slud.inv", analogToDigitalData.stickLimitUpDown.invert);
-
-    pref.putFloat("atdd.sllr.min", analogToDigitalData.stickLimitLeftRight.min);
-    pref.putFloat("atdd.sllr.max", analogToDigitalData.stickLimitLeftRight.max);
-    pref.putFloat("atdd.sllr.cen", analogToDigitalData.stickLimitLeftRight.center);
-    pref.putBool("atdd.sllr.inv", analogToDigitalData.stickLimitLeftRight.invert);
 
     pref.putInt("atdd.lpdm", analogToDigitalData.longPressDurationMs);
 
@@ -741,6 +740,16 @@ void RadioData::loadGlobalData()
         return;
     }
     selectedModel = pref.getUInt("sm", 0);
+    
+    analogToDigitalData.stickLimitUpDown.min = pref.getFloat("atdd.slud.min", 0.16);
+    analogToDigitalData.stickLimitUpDown.max = pref.getFloat("atdd.slud.max", 2.82);
+    analogToDigitalData.stickLimitUpDown.center = pref.getFloat("atdd.slud.cen", 1.34);
+    analogToDigitalData.stickLimitUpDown.invert = pref.getBool("atdd.slud.inv", true);
+
+    analogToDigitalData.stickLimitLeftRight.min = pref.getFloat("atdd.sllr.min", 0.21);
+    analogToDigitalData.stickLimitLeftRight.max = pref.getFloat("atdd.sllr.max", 2.90);
+    analogToDigitalData.stickLimitLeftRight.center = pref.getFloat("atdd.sllr.cen", 1.49);
+    analogToDigitalData.stickLimitLeftRight.invert = pref.getBool("atdd.sllr.inv", false);
     pref.end();
 }
 
@@ -755,17 +764,6 @@ void RadioData::loadModelData()
         Serial.printf("loadModelData %s begin error", name);
         return;
     }
-
-    analogToDigitalData.stickLimitUpDown.min = pref.getFloat("atdd.slud.min", 0.16);
-    analogToDigitalData.stickLimitUpDown.max = pref.getFloat("atdd.slud.max", 2.82);
-    analogToDigitalData.stickLimitUpDown.center = pref.getFloat("atdd.slud.cen", 1.34);
-    analogToDigitalData.stickLimitUpDown.invert = pref.getBool("atdd.slud.inv", true);
-
-    analogToDigitalData.stickLimitLeftRight.min = pref.getFloat("atdd.sllr.min", 0.21);
-    analogToDigitalData.stickLimitLeftRight.max = pref.getFloat("atdd.sllr.max", 2.90);
-    analogToDigitalData.stickLimitLeftRight.center = pref.getFloat("atdd.sllr.cen", 1.49);
-    analogToDigitalData.stickLimitLeftRight.invert = pref.getBool("atdd.sllr.inv", false);
-
     analogToDigitalData.longPressDurationMs = pref.getInt("atdd.lpdm", 600);
 
     sensorToDigitalData.angleLimitPitch.delta = pref.getInt("atdd.alp.d",45);

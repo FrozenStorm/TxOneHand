@@ -8,8 +8,18 @@
     <script src="script.js"></script>
 </head>
 <body>
-    <h1>ESP32 Steuerung</h1>
-    <p>Aktueller ADC-Wert: <span id="adcValue">Wird geladen...</span></p>
-    <button onclick="fetchADC()">Aktualisieren</button>
+    <h2>ESP32 OTA Firmware Update !! OMG IT WORKS</h2>
+    <form method="POST" action="/update" enctype="multipart/form-data">
+        <input type="file" name="update">
+        <input type="submit" value="Update starten">
+    </form>
+    <h2>WLAN-Einstellungen</h2>
+    <form method="POST" action="/save-wifi">
+        <label>SSID:</label>
+        <input type="text" name="ssid" required><br>
+        <label>Passwort:</label>
+        <input type="password" name="password" required><br>
+        <input type="submit" value="Speichern & Neustarten">
+    </form>
 </body>
 </html>
