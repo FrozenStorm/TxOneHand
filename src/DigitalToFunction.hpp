@@ -15,8 +15,7 @@ public:
 void DigitalToFunction::doFunction()
 {
     // Binding
-    if(radioData.functionData.throttle > 0.5 && radioData.functionData.armed == 0 &&
-        radioData.digitalData.trim == 1 && radioData.digitalData.armEvent == 1)
+    if(radioData.functionData.throttle > 0.5 && radioData.digitalData.trim == 1 && radioData.digitalData.armEvent == 1)
     {
         if(radioData.transmitterData.bindingState == radioData.BINDED || radioData.transmitterData.bindingState == radioData.BINDING_FAILED){
             radioData.transmitterData.bindingState = radioData.BINDING_STARTED;

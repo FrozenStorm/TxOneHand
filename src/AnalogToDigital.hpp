@@ -17,9 +17,12 @@ class AnalogToDigital : public RadioClass
 {
 private:
     esp_adc_cal_characteristics_t   adc_chars;    
+    unsigned int                    changedTimeArmMs = 0;
+    unsigned int                    changedTimeTrimMs = 0;
     unsigned int                    startPressTimeArmMs = 0;
     unsigned int                    startPressTimeTrimMs = 0;
     float analogToDigital(float value, const RadioData::AnalogToDigitalData::StickLimit& limit);
+    void getButton(const bool& value, unsigned int& changeTimeMs, bool& button, bool& buttonEvent);
     void getLongPress(bool& longPressEvent, unsigned int& startTimeMs, const bool& state, const bool& event);
 public:
     AnalogToDigital(RadioData& newRadioData);
@@ -55,11 +58,43 @@ void AnalogToDigital::doFunction()
 
     radioData.digitalData.stickUpDown = analogToDigital(radioData.analogData.stickUpDown, radioData.analogToDigitalData.stickLimitUpDown);
     radioData.digitalData.stickLeftRight = analogToDigital(radioData.analogData.stickLeftRight, radioData.analogToDigitalData.stickLimitLeftRight);
-    radioData.digitalData.arm = !digitalRead(PIN_ARM);
-    radioData.digitalData.trim = !digitalRead(PIN_TRIM);
 
+    getButton(!digitalRead(PIN_ARM),changedTimeArmMs,radioData.digitalData.arm,radioData.digitalData.armEvent);
+    getButton(!digitalRead(PIN_TRIM),changedTimeTrimMs,radioData.digitalData.trim,radioData.digitalData.trimEvent);
     getLongPress(radioData.digitalData.armLongPressEvent,startPressTimeArmMs,radioData.digitalData.arm,radioData.digitalData.armEvent);
     getLongPress(radioData.digitalData.trimLongPressEvent,startPressTimeTrimMs,radioData.digitalData.trim,radioData.digitalData.trimEvent);
+}
+
+void AnalogToDigital::getButton(const bool& value, unsigned int& changeTimeMs, bool& button, bool& buttonEvent)
+{
+    bool newButtonState;
+    if(value == true) 
+    {
+        newButtonState = true;
+        if(changeTimeMs == 0)
+        {
+            changeTimeMs = millis();
+        }
+    }
+    else 
+    {
+        newButtonState = false;
+        changeTimeMs = 0;
+    }
+
+    if(button == false && newButtonState == true)
+    {
+        if(millis() - changeTimeMs >= radioData.analogToDigitalData.longPressDurationMs/10)
+        {
+            buttonEvent = true;
+            button = newButtonState;
+        }
+    }
+    else 
+    {
+        buttonEvent = false;
+        button = newButtonState;
+    }
 }
 
 void AnalogToDigital::getLongPress(bool& longPressEvent, unsigned int& startTimeMs, const bool& state, const bool& event)
