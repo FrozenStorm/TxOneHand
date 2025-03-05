@@ -79,6 +79,7 @@ void setup() {
 
 /* -------------------- Main -----------------------------------------------------------------------------------*/
 void loop() { // Core 1
+  static int slowDown = 0;
   if (targetTime < millis()) {    
     targetTime += LOOP_DELAY_MS;
 
@@ -91,5 +92,22 @@ void loop() { // Core 1
     mixer.doFunction(); // <<1ms
     functionToChannel.doFunction(); // <<1ms
     transmitter.doFunction(); // <<1ms
+
+
+    slowDown +=1;
+    if(slowDown % 20 == 0)
+    {
+      Serial.println("-----------------------------------------------");
+      Serial.print("radioData.functionData.pitch = "); Serial.println(radioData.functionData.pitch);
+      Serial.print("radioData.functionData.roll = "); Serial.println(radioData.functionData.roll);
+      Serial.print("radioData.functionData.armed = "); Serial.println(radioData.functionData.armed);
+      Serial.print("radioData.analogData.battery = "); Serial.println(radioData.analogData.battery);
+      Serial.print("radioData.digitalData.stickLeftRight = "); Serial.println(radioData.digitalData.stickLeftRight);
+      Serial.print("radioData.digitalData.stickUpDown = "); Serial.println(radioData.digitalData.stickUpDown);
+      Serial.print("radioData.digitalData.arm = "); Serial.println(radioData.digitalData.arm);
+      Serial.print("radioData.digitalData.trim = "); Serial.println(radioData.digitalData.trim);
+      Serial.print("radioData.digitalData.pitch = "); Serial.println(radioData.digitalData.pitch);
+      Serial.print("radioData.digitalData.roll = "); Serial.println(radioData.digitalData.roll);
+    }
   }
 }

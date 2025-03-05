@@ -49,14 +49,14 @@ void AnalogToDigital::doFunction()
     radioData.rawData.stickLeftRight = adc1_get_raw(PIN_ROLL);
     radioData.rawData.battery = adc1_get_raw(PIN_VBAT);
 
-    radioData.analogData.stickUpDown = esp_adc_cal_raw_to_voltage(radioData.rawData.stickUpDown, &adc_chars);
-    radioData.analogData.stickLeftRight = esp_adc_cal_raw_to_voltage(radioData.rawData.stickLeftRight, &adc_chars);
-    radioData.analogData.battery = 2 * esp_adc_cal_raw_to_voltage(radioData.rawData.battery, &adc_chars);
+    radioData.analogData.stickUpDown = esp_adc_cal_raw_to_voltage(radioData.rawData.stickUpDown, &adc_chars)/1000.0;
+    radioData.analogData.stickLeftRight = esp_adc_cal_raw_to_voltage(radioData.rawData.stickLeftRight, &adc_chars)/1000.0;
+    radioData.analogData.battery = 2 * esp_adc_cal_raw_to_voltage(radioData.rawData.battery, &adc_chars)/1000.0;
 
     radioData.digitalData.stickUpDown = analogToDigital(radioData.analogData.stickUpDown, radioData.analogToDigitalData.stickLimitUpDown);
     radioData.digitalData.stickLeftRight = analogToDigital(radioData.analogData.stickLeftRight, radioData.analogToDigitalData.stickLimitLeftRight);
-    radioData.digitalData.arm = digitalRead(PIN_ARM);
-    radioData.digitalData.trim = digitalRead(PIN_TRIM);
+    radioData.digitalData.arm = !digitalRead(PIN_ARM);
+    radioData.digitalData.trim = !digitalRead(PIN_TRIM);
 
     getLongPress(radioData.digitalData.armLongPressEvent,startPressTimeArmMs,radioData.digitalData.arm,radioData.digitalData.armEvent);
     getLongPress(radioData.digitalData.trimLongPressEvent,startPressTimeTrimMs,radioData.digitalData.trim,radioData.digitalData.trimEvent);
