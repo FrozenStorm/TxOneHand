@@ -3,23 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32 Steuerung</title>
+    <title>ESP32 Fernsteuerung</title>
     <link rel="stylesheet" href="style.css">
-    <script src="script.js"></script>
 </head>
 <body>
-    <h2>ESP32 OTA Firmware Update !! OMG IT WORKS</h2>
-    <form method="POST" action="/update" enctype="multipart/form-data">
-        <input type="file" name="update">
-        <input type="submit" value="Update starten">
-    </form>
-    <h2>WLAN-Einstellungen</h2>
-    <form method="POST" action="/save-wifi">
-        <label>SSID:</label>
-        <input type="text" name="ssid" required><br>
-        <label>Passwort:</label>
-        <input type="password" name="password" required><br>
-        <input type="submit" value="Speichern & Neustarten">
-    </form>
+
+    <h1>ESP32 Fernsteuerung</h1>
+    <p id="status">Verbinde mit ESP32...</p>
+    
+    <h2>Live-Daten</h2>
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th>Parameter</th>
+                <th>Wert</th>
+            </tr>
+        </thead>
+        <tbody id="data-body">
+            <!-- Dynamische Inhalte kommen hier -->
+        </tbody>
+    </table>
+
+    <script src="script.js"></script>
+
 </body>
 </html>

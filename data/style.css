@@ -1,15 +1,19 @@
 body {
     font-family: Arial, sans-serif;
     text-align: center;
-    background-color: #f4f4f4;
-    color: #333;
 }
-h1 {
-    color: #007bff;
+table {
+    width: 80%;
+    margin: auto;
+    border-collapse: collapse;
 }
-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    margin-top: 10px;
-    cursor: pointer;
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+th {
+    background-color: #f2f2f2;
+}
+.error {
+    color: red;
 }
