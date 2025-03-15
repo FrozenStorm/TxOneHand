@@ -34,6 +34,12 @@ void FunctionToChannel::doFunction()
                 break;
             case radioData.THROTTLE:
                 value = radioData.functionData.throttle;
+                break;            
+            case radioData.STICK_LR:
+                value = radioData.digitalData.stickLeftRight;
+                break;
+            case radioData.STICK_UD:
+                value = radioData.digitalData.stickUpDown;
                 break;
             default:
                 value = 0;

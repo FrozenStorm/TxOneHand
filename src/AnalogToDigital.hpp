@@ -4,8 +4,8 @@
 #include "RadioClass.hpp"
 #include "esp_adc_cal.h"
 
-#define PIN_ROLL                ADC1_CHANNEL_3 // GPIO04 // ADC1_CH4
-#define PIN_PITCH               ADC1_CHANNEL_0 // GPIO01 // ADC1_CH0
+#define PIN_ROLL                ADC1_CHANNEL_0 // GPIO01 // ADC1_CH0
+#define PIN_PITCH               ADC1_CHANNEL_3 // GPIO04 // ADC1_CH4
 #define PIN_VBAT                ADC1_CHANNEL_1 // GPIO02 // ADC1_CH1
 #define PIN_LED                 8
 #define PIN_VIBRATION           5

@@ -23,11 +23,12 @@ void DigitalToFunction::doFunction()
     }
 
     // Trim
-    if(radioData.digitalData.trimLongPressEvent == 1){
-        radioData.trimData.pitch = radioData.digitalData.pitch;
-        radioData.trimData.roll = radioData.digitalData.roll;
+    if(radioData.digitalData.trimLongPressEvent == 1 && radioData.functionData.armed == 1){
+        radioData.trimData.pitch = radioData.functionData.pitch;
+        radioData.trimData.roll = radioData.functionData.roll;
         radioData.sensorToDigitalData.angleLimitPitch.center = radioData.analogData.pitch;
         radioData.sensorToDigitalData.angleLimitRoll.center = radioData.analogData.roll;
+        radioData.storeTrimData();
     }
 
     // Arm Switch
@@ -44,22 +45,26 @@ void DigitalToFunction::doFunction()
     {
         radioData.functionData.pitch = radioData.digitalData.pitch;
         radioData.functionData.roll = radioData.digitalData.roll;
-        radioData.functionData.throttle = sqrt(radioData.digitalData.stickUpDown * radioData.digitalData.stickUpDown + radioData.digitalData.stickLeftRight * radioData.digitalData.stickLeftRight);
+        radioData.functionData.throttle = -1+2*sqrt(radioData.digitalData.stickUpDown * radioData.digitalData.stickUpDown + radioData.digitalData.stickLeftRight * radioData.digitalData.stickLeftRight);
+        limitValue(radioData.functionData.throttle);
     }
     else
     {
         radioData.functionData.pitch = 0;
         radioData.functionData.roll = 0;
-        radioData.functionData.throttle = 0;
+        radioData.functionData.throttle = -1;
     } 
 
     // Batterie
-    if(radioData.analogData.battery > 3.8)
+    if(radioData.analogData.battery > 3.6)
     {
         digitalWrite(PIN_LED,1);
     }
-    else{
-        digitalWrite(PIN_LED,0);
+    else
+    {
+        static int slowDown = 0;
+        slowDown +=1;
+        if(slowDown % 10 == 0) digitalWrite(PIN_LED,digitalRead(PIN_LED) == 1 ? 0 : 1);
     }
 }
 #endif

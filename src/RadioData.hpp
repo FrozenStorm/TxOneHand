@@ -73,8 +73,8 @@ public:
     };
     MixerData mixerData;
 
-    enum Function{ NONE, PITCH, ROLL, VTAIL_LEFT, VTAIL_RIGHT, THROTTLE, NUMBER_OF_FUNCTIONS};
-    const char* functionNames[NUMBER_OF_FUNCTIONS] = {"NONE", "PITCH", "ROLL", "VTAIL_LEFT", "VTAIL_RIGHT", "THROTTLE"};
+    enum Function{ NONE, PITCH, ROLL, VTAIL_LEFT, VTAIL_RIGHT, THROTTLE, STICK_LR, STICK_UD, NUMBER_OF_FUNCTIONS};
+    const char* functionNames[NUMBER_OF_FUNCTIONS] = {"NONE", "PITCH", "ROLL", "VTAIL_LEFT", "VTAIL_RIGHT", "THROTTLE", "STICK_LR", "STICK_UD"};
 
     struct FunctionToChannelData
     {
@@ -740,16 +740,17 @@ void RadioData::loadGlobalData()
         return;
     }
     selectedModel = pref.getUInt("sm", 0);
-    
-    analogToDigitalData.stickLimitUpDown.min = pref.getFloat("atdd.slud.min", 0.16);
-    analogToDigitalData.stickLimitUpDown.max = pref.getFloat("atdd.slud.max", 2.82);
-    analogToDigitalData.stickLimitUpDown.center = pref.getFloat("atdd.slud.cen", 1.34);
-    analogToDigitalData.stickLimitUpDown.invert = pref.getBool("atdd.slud.inv", true);
 
-    analogToDigitalData.stickLimitLeftRight.min = pref.getFloat("atdd.sllr.min", 0.21);
-    analogToDigitalData.stickLimitLeftRight.max = pref.getFloat("atdd.sllr.max", 2.90);
-    analogToDigitalData.stickLimitLeftRight.center = pref.getFloat("atdd.sllr.cen", 1.49);
-    analogToDigitalData.stickLimitLeftRight.invert = pref.getBool("atdd.sllr.inv", false);
+    analogToDigitalData.stickLimitUpDown.min = pref.getFloat("atdd.slud.min", 0);
+    analogToDigitalData.stickLimitUpDown.max = pref.getFloat("atdd.slud.max", 3.1);
+    analogToDigitalData.stickLimitUpDown.center = pref.getFloat("atdd.slud.cen", 1.5);
+    analogToDigitalData.stickLimitUpDown.invert = pref.getBool("atdd.slud.inv", false);
+
+
+    analogToDigitalData.stickLimitLeftRight.min = pref.getFloat("atdd.sllr.min", 0);
+    analogToDigitalData.stickLimitLeftRight.max = pref.getFloat("atdd.sllr.max", 3.1);
+    analogToDigitalData.stickLimitLeftRight.center = pref.getFloat("atdd.sllr.cen", 1.37);
+    analogToDigitalData.stickLimitLeftRight.invert = pref.getBool("atdd.sllr.inv", true);
     pref.end();
 }
 
@@ -795,6 +796,16 @@ void RadioData::loadModelData()
         functionToChannelData.upperLimitChannel[i] = pref.getInt(name, 2047);
         sprintf(name,"ftcd.llc.%d",i);
         functionToChannelData.lowerLimitChannel[i] = pref.getInt(name, 0);
+    }
+    if(pref.isKey("ftcd.ftc.0") == false) // if no data is stored, set default values
+    {
+        pref.putInt("ftcd.ftc.0", VTAIL_LEFT);
+        pref.putInt("ftcd.ftc.1", VTAIL_RIGHT);
+        pref.putInt("ftcd.ftc.2", THROTTLE);
+        pref.putInt("ftcd.ftc.3", STICK_LR);
+        pref.putInt("ftcd.ftc.4", STICK_UD);
+        pref.putInt("ftcd.ftc.5", PITCH);
+        pref.putInt("ftcd.ftc.6", ROLL);
     }
 
     transmitterData.bindingState = (BindingState)pref.getInt("td.bs", BINDED);
