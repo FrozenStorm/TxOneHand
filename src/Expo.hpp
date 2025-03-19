@@ -1,5 +1,4 @@
-#ifndef EXPO_HPP
-#define EXPO_HPP
+#pragma once
 
 #include "RadioClass.hpp"
 #include <math.h>
@@ -26,5 +25,3 @@ void Expo::calcExpo(float& value, const float expo)
     value = ((1 - expo) * value + expo * pow(value,3));
     limitValue(value);
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef ANALOG_TO_DIGITAL_HPP
-#define ANALOG_TO_DIGITAL_HPP
+#pragma once
 
 #include "RadioClass.hpp"
 #include "esp_adc_cal.h"
@@ -13,10 +12,14 @@
 #define PIN_TRIM                9
 #define PIN_ARM                 11
 
+#define ADC_WIDTH_BIT           ADC_WIDTH_BIT_12
+#define ADC_ATTEN               ADC_ATTEN_DB_11
+
 class AnalogToDigital : public RadioClass
 {
 private:
     esp_adc_cal_characteristics_t   adc_chars;    
+    esp_adc_cal_value_t             val_type;
     unsigned int                    changedTimeArmMs = 0;
     unsigned int                    changedTimeTrimMs = 0;
     unsigned int                    startPressTimeArmMs = 0;
@@ -36,14 +39,18 @@ AnalogToDigital::AnalogToDigital(RadioData& newRadioData) : RadioClass(newRadioD
     pinMode(PIN_LED,OUTPUT);
     pinMode(PIN_VIBRATION,OUTPUT);
 
-    esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
-    // switch (val_type) {
-    //     case ESP_ADC_CAL_VAL_EFUSE_TP: Serial.println("Two Point Calibration"); break;
-    //     case ESP_ADC_CAL_VAL_EFUSE_VREF: Serial.println("eFUSE Vref Calibration"); break;
-    //     case ESP_ADC_CAL_VAL_DEFAULT_VREF: Serial.println("Default Calibration (1100 mV)"); break;
-    //     case ESP_ADC_CAL_VAL_EFUSE_TP_FIT: Serial.println("ESP_ADC_CAL_VAL_EFUSE_TP_FIT"); break;
-    //     case ESP_ADC_CAL_VAL_MAX: Serial.println("ESP_ADC_CAL_VAL_MAX"); break;
-    // }
+    adc1_config_width(ADC_WIDTH_BIT);
+    adc1_config_channel_atten(PIN_ROLL, ADC_ATTEN);
+    adc1_config_channel_atten(PIN_PITCH, ADC_ATTEN);
+    adc1_config_channel_atten(PIN_VBAT, ADC_ATTEN);
+    val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN, ADC_WIDTH_BIT, 1100, &adc_chars);
+    switch (val_type) {
+        case ESP_ADC_CAL_VAL_EFUSE_TP: Serial.println("Two Point Calibration"); break;
+        case ESP_ADC_CAL_VAL_EFUSE_VREF: Serial.println("eFUSE Vref Calibration"); break;
+        case ESP_ADC_CAL_VAL_DEFAULT_VREF: Serial.println("Default Calibration (1100 mV)"); break;
+        case ESP_ADC_CAL_VAL_EFUSE_TP_FIT: Serial.println("ESP_ADC_CAL_VAL_EFUSE_TP_FIT"); break;
+        case ESP_ADC_CAL_VAL_MAX: Serial.println("ESP_ADC_CAL_VAL_MAX"); break;
+    }
 }
 
 void AnalogToDigital::doFunction()
@@ -146,5 +153,3 @@ float AnalogToDigital::analogToDigital(float value, const RadioData::AnalogToDig
 
     return value;
 }
-
-#endif

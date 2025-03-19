@@ -1,5 +1,4 @@
-#ifndef MIXER_HPP
-#define MIXER_HPP
+#pragma once
 
 #include "RadioClass.hpp"
 
@@ -21,7 +20,3 @@ void Mixer::doFunction()
     radioData.functionData.vTailRight = (-radioData.functionData.roll + radioData.functionData.pitch);
     limitValue(radioData.functionData.vTailRight);
 }
-
-
-
-#endif

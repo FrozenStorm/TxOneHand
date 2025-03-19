@@ -1,5 +1,4 @@
-#ifndef FUNCTION_TO_CHANNEL_HPP
-#define FUNCTION_TO_CHANNEL_HPP
+#pragma once
 
 #include "RadioClass.hpp"
 
@@ -56,5 +55,3 @@ void FunctionToChannel::doFunction()
     }
     radioData.channelData.channel[13] = radioData.channelData.channel[2]; // Failsafe oder so Begrenzung auf Kanal 14 von Throttle
 }
-
-#endif

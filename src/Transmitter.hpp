@@ -1,5 +1,4 @@
-#ifndef TRANSMITTER_HPP
-#define TRANSMITTER_HPP
+#pragma once
 
 #include "RadioClass.hpp"
 
@@ -126,5 +125,3 @@ bool Transmitter::sendTx(void *)
     Serial1.write(txData,27);
     return true;
 }
-
-#endif

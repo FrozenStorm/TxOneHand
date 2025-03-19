@@ -1,5 +1,4 @@
-#ifndef PROTOCOL_HPP
-#define PROTOCOL_HPP
+#pragma once
 
 #include <vector>
 #include <string>
@@ -20,5 +19,3 @@ public:
     Protocol(unsigned char newValue, const char* newName, std::vector<SubProtocol> newSubProtocolList) : SubProtocol(newValue, newName), subProtocolList(newSubProtocolList){};
 };
 
-
-#endif

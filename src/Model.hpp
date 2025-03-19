@@ -1,5 +1,4 @@
-#ifndef MODEL_HPP
-#define MODEL_HPP
+#pragma once
 
 #include "RadioClass.hpp"
 
@@ -16,5 +15,3 @@ void Model::doFunction()
 {
 
 }
-
-#endif

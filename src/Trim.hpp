@@ -1,5 +1,4 @@
-#ifndef TRIM_HPP
-#define TRIM_HPP
+#pragma once
 
 #include "RadioClass.hpp"
 
@@ -15,5 +14,3 @@ void Trim::doFunction()
     radioData.functionData.roll += radioData.trimData.roll;
     radioData.functionData.pitch += radioData.trimData.pitch;
 }
-
-#endif

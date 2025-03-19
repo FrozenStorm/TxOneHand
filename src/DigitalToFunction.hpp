@@ -1,5 +1,4 @@
-#ifndef DIGITAL_TO_FUNCTION_HPP
-#define DIGITAL_TO_FUNCTION_HPP
+#pragma once
 
 #include "RadioClass.hpp"
 
@@ -59,12 +58,16 @@ void DigitalToFunction::doFunction()
     if(radioData.analogData.battery > 3.6)
     {
         digitalWrite(PIN_LED,1);
+        digitalWrite(PIN_VIBRATION,0);
     }
     else
     {
         static int slowDown = 0;
         slowDown +=1;
-        if(slowDown % 10 == 0) digitalWrite(PIN_LED,digitalRead(PIN_LED) == 1 ? 0 : 1);
+        if(slowDown % 10 == 0) 
+        {
+            digitalWrite(PIN_LED,digitalRead(PIN_LED) == 1 ? 0 : 1);
+            digitalWrite(PIN_VIBRATION,digitalRead(PIN_VIBRATION) == 1 ? 0 : 1);
+        }
     }
 }
-#endif

@@ -1,5 +1,4 @@
-#ifndef DUAL_RATE_HPP
-#define DUAL_RATE_HPP
+#pragma once
 
 #include "RadioClass.hpp"
 
@@ -24,6 +23,3 @@ void DualRate::calcRate(float& value, float rate)
     if(value > rate) value = rate;
     if(value < -rate) value = -rate;
 }
-
-
-#endif

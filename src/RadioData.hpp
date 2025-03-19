@@ -1,5 +1,4 @@
-#ifndef RADIO_DATA_HPP
-#define RADIO_DATA_HPP
+#pragma once
 
 #include <Preferences.h>
 #include <list.h>
@@ -90,12 +89,12 @@ public:
         float stickUpDown = 0;
         float stickLeftRight = 0;
         float battery = 0;
-        float gyroPitch = 0;
-        float gyroRoll = 0;
-        float gyroYaw = 0;
-        float accelPitch = 0;
-        float accelRoll = 0;
-        float accelYaw = 0;
+        float gyroX = 0;
+        float gyroY = 0;
+        float gyroZ = 0;
+        float accelX = 0;
+        float accelY = 0;
+        float accelZ = 0;
     };
     RawData rawData;
 
@@ -115,7 +114,10 @@ public:
         float yaw = 0;
     };
     AnalogData analogData;
-    
+
+    enum Orientation{ UNKNOWN, T_UP, T_LEFT, T_RIGHT, T_LEFT_DOWN, T_LEFT_UP, T_DOWN, NUMBER_OF_ORIENTATIONS};
+    const char* orientationNames[NUMBER_OF_ORIENTATIONS] = {"UNKNOWN", "T_UP", "T_LEFT", "T_RIGHT", "T_LEFT_DOWN", "T_LEFT_UP", "T_DOWN"};
+
     struct DigitalData
     {
         float stickUpDown = 0;
@@ -135,6 +137,8 @@ public:
         float yaw = 0;
         float altitude = 0;
         float temperature = 0;
+
+        Orientation orientation = UNKNOWN;
     };
     DigitalData digitalData;
 
@@ -743,13 +747,13 @@ void RadioData::loadGlobalData()
 
     analogToDigitalData.stickLimitUpDown.min = pref.getFloat("atdd.slud.min", 0);
     analogToDigitalData.stickLimitUpDown.max = pref.getFloat("atdd.slud.max", 3.1);
-    analogToDigitalData.stickLimitUpDown.center = pref.getFloat("atdd.slud.cen", 1.5);
+    analogToDigitalData.stickLimitUpDown.center = pref.getFloat("atdd.slud.cen", 1.54);
     analogToDigitalData.stickLimitUpDown.invert = pref.getBool("atdd.slud.inv", false);
 
 
     analogToDigitalData.stickLimitLeftRight.min = pref.getFloat("atdd.sllr.min", 0);
     analogToDigitalData.stickLimitLeftRight.max = pref.getFloat("atdd.sllr.max", 3.1);
-    analogToDigitalData.stickLimitLeftRight.center = pref.getFloat("atdd.sllr.cen", 1.37);
+    analogToDigitalData.stickLimitLeftRight.center = pref.getFloat("atdd.sllr.cen", 1.67);
     analogToDigitalData.stickLimitLeftRight.invert = pref.getBool("atdd.sllr.inv", true);
     pref.end();
 }
@@ -826,5 +830,3 @@ void RadioData::loadModelData()
     
     pref.end();
 }
-
-#endif

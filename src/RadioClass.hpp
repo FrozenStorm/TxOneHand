@@ -1,5 +1,4 @@
-#ifndef RADIO_CLASS_HPP
-#define RADIO_CLASS_HPP
+#pragma once
 
 #include <TFT_eSPI.h>
 #include <Arduino.h>
@@ -22,6 +21,3 @@ void RadioClass::limitValue(float& value)
     if(value > 1) value = 1;
     if(value < -1) value = -1;
 }
-
-
-#endif

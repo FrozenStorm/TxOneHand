@@ -79,7 +79,6 @@ void setup() {
   // Loop Delay
   targetTime = millis() + LOOP_DELAY_MS; 
   Serial.println("Init done");
-
 }
 
 /* -------------------- Main -----------------------------------------------------------------------------------*/
@@ -115,12 +114,13 @@ void loop() { // Core 1
       // Serial.print("radioData.digitalData.yaw = "); Serial.println(radioData.digitalData.yaw);
       // Serial.print("radioData.digitalData.altitude = "); Serial.println(radioData.digitalData.altitude);
       // Serial.print("radioData.digitalData.temperature = "); Serial.println(radioData.digitalData.temperature);
+      Serial.print("radioData.digitalData.orientation = "); Serial.println(radioData.orientationNames[radioData.digitalData.orientation]);
   
       // Serial.println("**** FunctionData ****");
-      // Serial.print("radioData.functionData.pitch = "); Serial.println(radioData.functionData.pitch);
-      // Serial.print("radioData.functionData.roll = "); Serial.println(radioData.functionData.roll);
-      // Serial.print("radioData.functionData.throttle = "); Serial.println(radioData.functionData.throttle);
-      // Serial.print("radioData.functionData.armed = "); Serial.println(radioData.functionData.armed);
+      Serial.print("radioData.functionData.pitch = "); Serial.println(radioData.functionData.pitch);
+      Serial.print("radioData.functionData.roll = "); Serial.println(radioData.functionData.roll);
+      Serial.print("radioData.functionData.throttle = "); Serial.println(radioData.functionData.throttle);
+      Serial.print("radioData.functionData.armed = "); Serial.println(radioData.functionData.armed);
       // Serial.print("radioData.functionData.vTailLeft = "); Serial.println(radioData.functionData.vTailLeft);
       // Serial.print("radioData.functionData.vTailRight = "); Serial.println(radioData.functionData.vTailRight);
   
@@ -153,8 +153,8 @@ void loop() { // Core 1
       // Serial.print("radioData.dualRateData.throttle = "); Serial.println(radioData.dualRateData.throttle);
   
       // Serial.println("**** TrimData ****");
-      // Serial.print("radioData.trimData.roll = "); Serial.println(radioData.trimData.roll);
-      // Serial.print("radioData.trimData.pitch = "); Serial.println(radioData.trimData.pitch);
+      Serial.print("radioData.trimData.roll = "); Serial.println(radioData.trimData.roll);
+      Serial.print("radioData.trimData.pitch = "); Serial.println(radioData.trimData.pitch);
   
       // Serial.println("**** MixerData ****");
       // Serial.print("radioData.mixerData.throttleToPitch = "); Serial.println(radioData.mixerData.throttleToPitch);
@@ -177,20 +177,20 @@ void loop() { // Core 1
       // }
   
       // Serial.println("**** RawData ****");
-      // Serial.print("radioData.rawData.stickUpDown = "); Serial.println(radioData.rawData.stickUpDown);
-      // Serial.print("radioData.rawData.stickLeftRight = "); Serial.println(radioData.rawData.stickLeftRight);
-      // Serial.print("radioData.rawData.battery = "); Serial.println(radioData.rawData.battery);
-      // Serial.print("radioData.rawData.gyroPitch = "); Serial.println(radioData.rawData.gyroPitch);
-      // Serial.print("radioData.rawData.gyroRoll = "); Serial.println(radioData.rawData.gyroRoll);
-      // Serial.print("radioData.rawData.gyroYaw = "); Serial.println(radioData.rawData.gyroYaw);
-      // Serial.print("radioData.rawData.accelPitch = "); Serial.println(radioData.rawData.accelPitch);
-      // Serial.print("radioData.rawData.accelRoll = "); Serial.println(radioData.rawData.accelRoll);
-      // Serial.print("radioData.rawData.accelYaw = "); Serial.println(radioData.rawData.accelYaw);
+      Serial.print("radioData.rawData.stickUpDown = "); Serial.println(radioData.rawData.stickUpDown);
+      Serial.print("radioData.rawData.stickLeftRight = "); Serial.println(radioData.rawData.stickLeftRight);
+      Serial.print("radioData.rawData.battery = "); Serial.println(radioData.rawData.battery);
+      // Serial.print("radioData.rawData.gyroX = "); Serial.println(radioData.rawData.gyroX);
+      // Serial.print("radioData.rawData.gyroY = "); Serial.println(radioData.rawData.gyroY);
+      // Serial.print("radioData.rawData.gyroZ = "); Serial.println(radioData.rawData.gyroZ);
+      // Serial.print("radioData.rawData.accelX = "); Serial.println(radioData.rawData.accelX);
+      // Serial.print("radioData.rawData.accelY = "); Serial.println(radioData.rawData.accelY);
+      // Serial.print("radioData.rawData.accelZ = "); Serial.println(radioData.rawData.accelZ);
   
       // Serial.println("**** AnalogData ****");
-      // Serial.print("radioData.analogData.stickUpDown = "); Serial.println(radioData.analogData.stickUpDown);
-      // Serial.print("radioData.analogData.stickLeftRight = "); Serial.println(radioData.analogData.stickLeftRight);
-      // Serial.print("radioData.analogData.battery = "); Serial.println(radioData.analogData.battery);
+      Serial.print("radioData.analogData.stickUpDown = "); Serial.println(radioData.analogData.stickUpDown);
+      Serial.print("radioData.analogData.stickLeftRight = "); Serial.println(radioData.analogData.stickLeftRight);
+      Serial.print("radioData.analogData.battery = "); Serial.println(radioData.analogData.battery);
       // Serial.print("radioData.analogData.gyroPitch = "); Serial.println(radioData.analogData.gyroPitch);
       // Serial.print("radioData.analogData.gyroRoll = "); Serial.println(radioData.analogData.gyroRoll);
       // Serial.print("radioData.analogData.gyroYaw = "); Serial.println(radioData.analogData.gyroYaw);
