@@ -606,6 +606,7 @@ public:
     void storeTrimData();
     void storeGlobalData();
     void loadGlobalData();    
+    void resetData();
 
     char* getModelName(void);
     
@@ -756,6 +757,29 @@ void RadioData::loadGlobalData()
     analogToDigitalData.stickLimitLeftRight.center = pref.getFloat("atdd.sllr.cen", 1.67);
     analogToDigitalData.stickLimitLeftRight.invert = pref.getBool("atdd.sllr.inv", true);
     pref.end();
+}
+
+void RadioData::resetData()
+{
+    if(!pref.begin("Global"))
+    {
+        Serial.println("loadGlobalData begin error");
+        return;
+    }
+    pref.clear();
+    pref.end();
+    for(int i=0; i<MAX_NUMBER_OF_MODELS; i++)
+    {
+        char name[15];
+        sprintf(name,"Model-%d",i);
+        if(!pref.begin(name))
+        {
+            Serial.printf("resetData %s begin error", name);
+            return;
+        }
+        pref.clear();
+        pref.end();
+    }
 }
 
 void RadioData::loadModelData()
