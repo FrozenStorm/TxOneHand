@@ -23,11 +23,13 @@ void DigitalToFunction::doFunction()
 
     // Trim
     if(radioData.digitalData.trimLongPressEvent == 1 && radioData.functionData.armed == 1){
-        radioData.trimData.pitch = radioData.functionData.pitch;
-        radioData.trimData.roll = radioData.functionData.roll;
-        radioData.sensorToDigitalData.angleLimitPitch.center = radioData.analogData.pitch;
-        radioData.sensorToDigitalData.angleLimitRoll.center = radioData.analogData.roll;
-        radioData.storeTrimData();
+        if(radioData.functionData.pitch != NAN && radioData.functionData.roll != NAN && radioData.analogData.pitch != NAN && radioData.analogData.roll != NAN){
+            radioData.trimData.pitch = radioData.functionData.pitch;
+            radioData.trimData.roll = radioData.functionData.roll;
+            radioData.sensorToDigitalData.angleLimitPitch.center = radioData.analogData.pitch;
+            radioData.sensorToDigitalData.angleLimitRoll.center = radioData.analogData.roll;
+            radioData.storeTrimData();
+        }
     }
 
     // Arm Switch

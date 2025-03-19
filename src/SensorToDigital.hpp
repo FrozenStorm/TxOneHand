@@ -53,13 +53,15 @@ void SensorToDigital::doFunction()
     radioData.analogData.gyroRoll = gyroRoll * 180 / PI;
     radioData.analogData.gyroYaw = gyroYaw * 180 / PI;
 
-    if(accelPitch != 0 && accelYaw != 0)
+    if(accelPitch != NAN && accelYaw != NAN)
     {
         radioData.analogData.accelPitch = atan2(accelPitch, accelYaw) * 180 / PI;
+        if(radioData.analogData.accelPitch == NAN) radioData.analogData.accelPitch = 0;
     }
-    if(accelRoll != 0 && accelYaw != 0)
+    if(accelRoll != NAN && accelYaw != NAN)
     {
         radioData.analogData.accelRoll = atan2(accelRoll, accelYaw) * 180 / PI;
+        if(radioData.analogData.accelRoll == NAN) radioData.analogData.accelRoll = 0;
     }
     // TODO radioData.analogData.accelYaw = .........
 
