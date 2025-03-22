@@ -12,7 +12,7 @@
 #include "Model.hpp"
 #include "DualRate.hpp"
 #include "SensorToDigital.hpp"
-//#include "Web.hpp"
+#include "Web.hpp"
 #include <nvs_flash.h>
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_BMP085.h>
@@ -81,6 +81,7 @@ void setup() {
   xTaskCreatePinnedToCore(myMainTask, "MainTask", 10000, NULL, 2, NULL, 1);
   xTaskCreatePinnedToCore(mySerialTask, "SerialTask", 10000, NULL, 1, NULL, 1);
   
+  // initWeb();
   Serial.println("Init done");
 }
 
@@ -202,10 +203,10 @@ void mySerialTask(void *pvParameters) {
     // Serial.print("radioData.rawData.accelY = "); Serial.println(radioData.rawData.accelY);
     // Serial.print("radioData.rawData.accelZ = "); Serial.println(radioData.rawData.accelZ);
 
-    // Serial.println("**** AnalogData ****");
+    Serial.println("**** AnalogData ****");
     // Serial.print("radioData.analogData.stickUpDown = "); Serial.println(radioData.analogData.stickUpDown);
     // Serial.print("radioData.analogData.stickLeftRight = "); Serial.println(radioData.analogData.stickLeftRight);
-    // Serial.print("radioData.analogData.battery = "); Serial.println(radioData.analogData.battery);
+    Serial.print("radioData.analogData.battery = "); Serial.println(radioData.analogData.battery);
     // Serial.print("radioData.analogData.gyroPitch = "); Serial.println(radioData.analogData.gyroPitch);
     // Serial.print("radioData.analogData.gyroRoll = "); Serial.println(radioData.analogData.gyroRoll);
     // Serial.print("radioData.analogData.gyroYaw = "); Serial.println(radioData.analogData.gyroYaw);

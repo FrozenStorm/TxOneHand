@@ -3,6 +3,7 @@
 #include <Preferences.h>
 #include <list.h>
 #include "Protocol.hpp"
+#include <WiFi.h>
 
 #define MAX_NUMBER_OF_MODELS 3
 #define MODEL_NAME_LENGTH 12
@@ -16,6 +17,15 @@ private:
     Preferences pref;
 
 public:
+    struct WebData
+    {
+        char ssid[16];
+        char password[16];
+        char apSsid[16];
+        char apPassword[16];
+    };
+    WebData webData;
+
     struct AnalogToDigitalData
     {
         struct StickLimit{
@@ -649,6 +659,11 @@ void RadioData::storeGlobalData()
     }
     pref.putUInt("sm", selectedModel);
 
+    pref.putBytes("wd.s", webData.ssid, sizeof(webData.ssid));
+    pref.putBytes("wd.p", webData.password, sizeof(webData.password));
+    pref.putBytes("wd.as", webData.apSsid, sizeof(webData.apSsid));
+    pref.putBytes("wd.ap", webData.apPassword, sizeof(webData.apPassword));
+
     pref.putFloat("atdd.slud.min", analogToDigitalData.stickLimitUpDown.min);
     pref.putFloat("atdd.slud.max", analogToDigitalData.stickLimitUpDown.max);
     pref.putFloat("atdd.slud.cen", analogToDigitalData.stickLimitUpDown.center);
@@ -658,6 +673,7 @@ void RadioData::storeGlobalData()
     pref.putFloat("atdd.sllr.max", analogToDigitalData.stickLimitLeftRight.max);
     pref.putFloat("atdd.sllr.cen", analogToDigitalData.stickLimitLeftRight.center);
     pref.putBool("atdd.sllr.inv", analogToDigitalData.stickLimitLeftRight.invert);
+
     Serial.printf("Global entries left = %u\n", pref.freeEntries());
     pref.end();
 }
@@ -746,11 +762,24 @@ void RadioData::loadGlobalData()
     }
     selectedModel = pref.getUInt("sm", 0);
 
+    strncpy(webData.ssid, "TxOneMove", sizeof(webData.ssid));
+    strncpy(webData.password, "12345678", sizeof(webData.password));
+    strncpy(webData.apSsid, "TxOneMove", sizeof(webData.apSsid));
+    strncpy(webData.apPassword, "12345678", sizeof(webData.apPassword));
+    // Sicherheit: Nullterminator forcieren
+    webData.ssid[sizeof(webData.ssid) - 1] = '\0';
+    webData.password[sizeof(webData.password) - 1] = '\0';
+    webData.apSsid[sizeof(webData.apSsid) - 1] = '\0';
+    webData.apPassword[sizeof(webData.apPassword) - 1] = '\0';
+    pref.getBytes("wd.s", webData.ssid, sizeof(webData.ssid));
+    pref.getBytes("wd.p", webData.password, sizeof(webData.password));
+    pref.getBytes("wd.as", webData.apSsid, sizeof(webData.apSsid));
+    pref.getBytes("wd.ap", webData.apPassword, sizeof(webData.apPassword));
+
     analogToDigitalData.stickLimitUpDown.min = pref.getFloat("atdd.slud.min", 0);
     analogToDigitalData.stickLimitUpDown.max = pref.getFloat("atdd.slud.max", 3.1);
     analogToDigitalData.stickLimitUpDown.center = pref.getFloat("atdd.slud.cen", 1.54);
     analogToDigitalData.stickLimitUpDown.invert = pref.getBool("atdd.slud.inv", false);
-
 
     analogToDigitalData.stickLimitLeftRight.min = pref.getFloat("atdd.sllr.min", 0);
     analogToDigitalData.stickLimitLeftRight.max = pref.getFloat("atdd.sllr.max", 3.1);
@@ -847,9 +876,8 @@ void RadioData::loadModelData()
     readSize = pref.getBytes("md.mn", modelData.modelName, sizeof(modelData.modelName));
     if(readSize == 0) 
     {
-        modelData = {
-            .modelName = {2,13,22,13,2,0,0,0,0,0,0,0}
-        };
+        const char defaultModelName[MODEL_NAME_LENGTH] = {2,13,22,13,2,0,0,0,0,0,0,0};
+        strncpy(modelData.modelName, defaultModelName, MODEL_NAME_LENGTH);
     }
     
     pref.end();
