@@ -13,7 +13,6 @@
 #include "DualRate.hpp"
 #include "SensorToDigital.hpp"
 #include "Web.hpp"
-#include <nvs_flash.h>
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_BMP085.h>
 
@@ -53,8 +52,6 @@ void setup() {
   Serial.begin(115200);
   Serial.println("Init started");
   // Factory Reset FLASH
-  // nvs_flash_erase();      // erase the NVS partition and...
-  // nvs_flash_init();       // initialize the NVS partition.
   //radioData.resetData();
 
   // Load Models

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <TFT_eSPI.h>
 #include <Arduino.h>
 #include <RadioData.hpp>
 #include <string.h>

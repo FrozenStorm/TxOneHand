@@ -13,7 +13,7 @@
 #define PIN_ARM                 11
 
 #define ADC_WIDTH_BIT           ADC_WIDTH_BIT_12
-#define ADC_ATTEN               ADC_ATTEN_DB_11
+#define ADC_ATTEN               ADC_ATTEN_DB_12
 
 class AnalogToDigital : public RadioClass
 {

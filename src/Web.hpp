@@ -4,7 +4,7 @@
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 // #include <Update.h>
-#include <AsyncTCP.h>
+// #include <AsyncTCP.h>
 
 extern const uint8_t index_html_start[] asm("_binary_data_index_html_start");
 extern const uint8_t index_html_end[] asm("_binary_data_index_html_end");
@@ -17,7 +17,7 @@ extern RadioData radioData;
 AsyncWebServer server(80);
 
 void serveStaticFile(AsyncWebServerRequest *request, const char* mimeType, const uint8_t* fileData, size_t fileSize) {
-    request->send_P(200, mimeType, fileData, fileSize);
+    request->send(200, mimeType, fileData, fileSize);
 }
 
 void initWeb()
