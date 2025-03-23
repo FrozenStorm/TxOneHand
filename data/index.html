@@ -1,13 +1,40 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>ESP32 Webserver</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>ESP32 Fernsteuerung</title>
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <h1>Willkommen auf dem ESP32!</h1>
-  <button onclick="sayHello()">Klick mich!</button>
-  <script src="script.js"></script>
+<h1>ESP32 Fernsteuerung</h1>
+
+<div class="tabs">
+    <button onclick="openTab('settings')">Einstellungen</button>
+    <button onclick="openTab('live')">Live View</button>
+    <button onclick="openTab('model')">Modell</button>
+</div>
+
+<div id="settings" class="tab-content">
+    <h2>Einstellungen</h2>
+    <div id="settingsContent"></div>
+    <button onclick="saveSettings()">Speichern</button>
+    <button onclick="storeGlobal()">storeGlobal</button>
+</div>
+
+<div id="live" class="tab-content hidden">
+    <h2>Live View</h2>
+    <div id="liveContent"></div>
+    <canvas id="joystickCanvas" width="200" height="200"></canvas>
+    <div id="joystickText">x: 0.00, y: 0.00</div>
+</div>
+
+<div id="model" class="tab-content hidden">
+    <h2>Modell</h2>
+    <div id="modelContent"></div>
+    <button onclick="saveModel()">Save Model</button>
+    <button onclick="loadModel()">Load Model</button>
+</div>
+
+<script src="/script.js"></script>
 </body>
 </html>

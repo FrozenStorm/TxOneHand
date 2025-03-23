@@ -1,8 +1,31 @@
 body {
-    font-family: sans-serif;
-    background-color: #eef;
-    padding: 20px;
-  }
-  h1 {
-    color: #336;
-  }
+  font-family: sans-serif;
+  background: #f0f0f0;
+  margin: 0;
+  padding: 1em;
+}
+h1 { text-align: center; }
+.tabs button {
+  padding: 10px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+.tab-content {
+  background: white;
+  padding: 1em;
+  margin-top: 1em;
+  border: 1px solid #ccc;
+}
+.hidden {
+  display: none;
+}
+input {
+  display: block;
+  margin-bottom: 0.5em;
+  width: 100%;
+  padding: 0.3em;
+}
+canvas {
+  border: 1px solid #ccc;
+  margin-top: 1em;
+}

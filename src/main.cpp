@@ -72,7 +72,7 @@ void setup() {
   Serial.println("Sensor ready");
 
   // Init Web
-  //taskInitWeb();
+  initWeb();
 
   // Create Tasks
   xTaskCreatePinnedToCore(myMainTask, "MainTask", 10000, NULL, 2, NULL, 1);
