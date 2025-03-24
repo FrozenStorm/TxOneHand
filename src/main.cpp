@@ -57,8 +57,8 @@ void setup() {
   // Load Models
   radioData.loadGlobalData();
   radioData.loadModelData();
-  //radioData.storeGlobalData();
-  //radioData.storeModelData();
+  radioData.storeGlobalData();
+  radioData.storeModelData();
   Serial.println("Model loaded");
 
 
@@ -78,7 +78,6 @@ void setup() {
   // xTaskCreatePinnedToCore(myMainTask, "MainTask", 10000, NULL, 2, NULL, 1);
   // xTaskCreatePinnedToCore(mySerialTask, "SerialTask", 10000, NULL, 1, NULL, 1);
   
-  // initWeb();
   Serial.println("Init done");
 }
 
