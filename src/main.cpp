@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <Wire.h>
+#include "esp_clk.h"
 #include "AnalogToDigital.hpp"
 #include "DigitalToFunction.hpp"
 #include "Expo.hpp"
@@ -49,8 +50,13 @@ void mySerialTask(void *pvParameters);
 
 /* -------------------- Setup ----------------------------------------------------------------------------------*/
 void setup() {
+  delay(3000);
   Serial.begin(115200);
   Serial.println("Init started");
+
+  Serial.setDebugOutput(true);
+  esp_log_level_set("*", ESP_LOG_VERBOSE);
+
   // Factory Reset FLASH
   //radioData.resetData();
 
@@ -72,24 +78,23 @@ void setup() {
   Serial.println("Sensor ready");
 
   // Init Web
-  initWeb();
+  xTaskCreatePinnedToCore(initWeb, "InitWeb", 10000, NULL, 1, NULL, 0);
 
   // Create Tasks
-  // xTaskCreatePinnedToCore(myMainTask, "MainTask", 10000, NULL, 2, NULL, 1);
-  // xTaskCreatePinnedToCore(mySerialTask, "SerialTask", 10000, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(myMainTask, "MainTask", 20000, NULL, 2, NULL, 1);
+  xTaskCreatePinnedToCore(mySerialTask, "SerialTask", 10000, NULL, 1, NULL, 1);
   
   Serial.println("Init done");
 }
 
 /* -------------------- Main -----------------------------------------------------------------------------------*/
 void loop() { // Core 1
-  vTaskDelay(portMAX_DELAY);
 }
 
 /* -------------------- Task -----------------------------------------------------------------------------------*/
 void myMainTask(void *pvParameters) {
   const TickType_t loopDelay = 20 / portTICK_PERIOD_MS;
-  TickType_t lastWakeTime;
+  TickType_t lastWakeTime = xTaskGetTickCount();
   Serial.println("Main Task Started");
   for (;;) {
     xTaskDelayUntil(&lastWakeTime, loopDelay);
@@ -107,7 +112,7 @@ void myMainTask(void *pvParameters) {
 
 void mySerialTask(void *pvParameters) {
   const TickType_t loopDelay = 500 / portTICK_PERIOD_MS;
-  TickType_t lastWakeTime;
+  TickType_t lastWakeTime = xTaskGetTickCount();
   Serial.println("Serial Task Started");
   for (;;) {
     xTaskDelayUntil(&lastWakeTime, loopDelay);
@@ -215,6 +220,17 @@ void mySerialTask(void *pvParameters) {
 
     // Serial.println("**** ModelData ****");
     // Serial.print("radioData.modelData.modelName = "); Serial.println(radioData.getModelName());
+
+    Serial.println("**** FreeRTOS ****");
+    Serial.printf("Free Heap: %u\n", ESP.getFreeHeap());
+    Serial.printf("Min Free Heap: %u\n", ESP.getMinFreeHeap());
+    Serial.printf("Max Alloc Heap: %u\n", ESP.getMaxAllocHeap());
+    Serial.printf("Free Stack: %u\n", uxTaskGetStackHighWaterMark(NULL));
+    Serial.printf("Task Count: %u\n", uxTaskGetNumberOfTasks());
+    esp_reset_reason_t reason = esp_reset_reason();
+    Serial.printf("🔁 Reset-Grund: %d\n", reason);
+    Serial.printf("APB Clock: %u Hz\n", esp_clk_apb_freq());    // UART hängt an APB Clock
+    Serial.printf("CPU Clock: %u Hz\n", esp_clk_cpu_freq());    // CPU Core Speed
   }
 }
 

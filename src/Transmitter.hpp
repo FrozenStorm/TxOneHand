@@ -1,9 +1,10 @@
 #pragma once
 
 #include "RadioClass.hpp"
+#include "driver/uart.h"
 
-#define PIN_MULTI_TX          43
-#define PIN_MULTI_RX          44
+#define PIN_MULTI_TX          14
+#define PIN_MULTI_RX          13
 
 class Transmitter : public RadioClass
 {
@@ -20,10 +21,12 @@ public:
 
 Transmitter::Transmitter(RadioData& newRadioData) : RadioClass(newRadioData)
 {
-  // UART
-  Serial1.begin(100000, SERIAL_8E2, -1, PIN_MULTI_TX);
-  Serial2.begin(100000, SERIAL_8E2, PIN_MULTI_RX, -1, true);
-  Serial2.setTimeout(4);
+    // UART
+    Serial1.begin(100000, SERIAL_8E2, -1, PIN_MULTI_TX);
+    uart_set_baudrate(UART_NUM_1, 100000); // TODO nötig?
+    Serial2.begin(100000, SERIAL_8E2, PIN_MULTI_RX, -1, true);
+    uart_set_baudrate(UART_NUM_2, 100000);
+    Serial2.setTimeout(4);
 }
 
 void Transmitter::doFunction()

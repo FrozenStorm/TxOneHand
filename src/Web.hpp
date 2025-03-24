@@ -21,7 +21,7 @@ void serveStaticFile(AsyncWebServerRequest *request, const char* mimeType, const
     request->send_P(200, mimeType, fileData, fileSize);
 }
 
-void initWeb()
+void initWeb(void *pvParameters)
 {
     // WiFi.begin(radioData.webData.ssid, radioData.webData.password);
     // ToDo WLAN verbinden geht noch nicht
@@ -127,4 +127,6 @@ void initWeb()
     });
 
     server.begin();
+
+    vTaskDelete(NULL);
 }
