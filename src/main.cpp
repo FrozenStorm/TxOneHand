@@ -75,8 +75,8 @@ void setup() {
   initWeb();
 
   // Create Tasks
-  xTaskCreatePinnedToCore(myMainTask, "MainTask", 10000, NULL, 2, NULL, 1);
-  xTaskCreatePinnedToCore(mySerialTask, "SerialTask", 10000, NULL, 1, NULL, 1);
+  // xTaskCreatePinnedToCore(myMainTask, "MainTask", 10000, NULL, 2, NULL, 1);
+  // xTaskCreatePinnedToCore(mySerialTask, "SerialTask", 10000, NULL, 1, NULL, 1);
   
   // initWeb();
   Serial.println("Init done");

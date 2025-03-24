@@ -4,7 +4,7 @@
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
-// #include <Update.h>
+#include <Update.h>
 // #include <AsyncTCP.h>
 
 extern const uint8_t index_html_start[] asm("_binary_data_index_html_start");
@@ -23,8 +23,10 @@ void serveStaticFile(AsyncWebServerRequest *request, const char* mimeType, const
 
 void initWeb()
 {
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(radioData.webData.ssid, radioData.webData.password);
+    // WiFi.mode(WIFI_STA);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    // WiFi.begin(radioData.webData.ssid, radioData.webData.password);
+    WiFi.begin("Corrin_Gast", "KingDaDaDa1");
 
     Serial.printf("Verbinde mit WLAN: %s\n", radioData.webData.ssid);
 
@@ -63,33 +65,60 @@ void initWeb()
         serveStaticFile(request, "application/javascript", script_js_start, script_js_end - script_js_start);
     });
 
-
-      // ✅ REST GET/POST für alle Bereiche
-    server.on("/web", HTTP_GET, [](AsyncWebServerRequest *r) {
-        JsonDocument doc(256);
-        doc["ssid"] = radioData.webData.ssid;
-        doc["password"] = radioData.webData.password;
-        doc["apSsid"] = radioData.webData.apSsid;
-        doc["apPassword"] = radioData.webData.apPassword;
-        String json; serializeJson(doc, json);
-        r->send(200, "application/json", json);
+    server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request) {
+        if (!Update.hasError()) {
+            request->send(200, "text/plain", "Update erfolgreich! Starte neu...");
+            delay(1000);
+            ESP.restart();
+        } else {
+            request->send(500, "text/plain", "Update fehlgeschlagen.");
+        }
+    }, [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+        if (!index) {
+            Serial.printf("Update gestartet: %s\n", filename.c_str());
+            if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+                Serial.println("Update Start fehlgeschlagen!");
+            }
+        }
+        if (Update.write(data, len) != len) {
+            Serial.println("Fehler beim Schreiben!");
+        }
+        if (final) {
+            if (Update.end(true)) {
+                Serial.println("Update abgeschlossen!");
+            } else {
+                Serial.println("Update fehlgeschlagen!");
+            }
+        }
     });
 
-    server.on("/web", HTTP_POST, [](AsyncWebServerRequest *r){}, NULL, [](AsyncWebServerRequest *r, uint8_t *data, size_t len, size_t, size_t){
-        JsonDocument doc(256);
-        deserializeJson(doc, data);
-        strlcpy(radioData.webData.ssid, doc["ssid"] | "", sizeof(radioData.webData.ssid));
-        strlcpy(radioData.webData.password, doc["password"] | "", sizeof(radioData.webData.password));
-        strlcpy(radioData.webData.apSsid, doc["apSsid"] | "", sizeof(radioData.webData.apSsid));
-        strlcpy(radioData.webData.apPassword, doc["apPassword"] | "", sizeof(radioData.webData.apPassword));
-        r->send(200, "text/plain", "OK");
-    });
 
-    // 🔘 Store/Load Buttons
-    server.on("/storeGlobal", HTTP_POST, [](AsyncWebServerRequest *r) {
-        radioData.storeGlobalData();
-        r->send(200, "text/plain", "OK");
-    });
+    //   // ✅ REST GET/POST für alle Bereiche
+    // server.on("/web", HTTP_GET, [](AsyncWebServerRequest *r) {
+    //     DynamicJsonDocument doc(256);
+    //     doc["ssid"] = radioData.webData.ssid;
+    //     doc["password"] = radioData.webData.password;
+    //     doc["apSsid"] = radioData.webData.apSsid;
+    //     doc["apPassword"] = radioData.webData.apPassword;
+    //     String json; serializeJson(doc, json);
+    //     r->send(200, "application/json", json);
+    // });
+
+    // server.on("/web", HTTP_POST, [](AsyncWebServerRequest *r){}, NULL, [](AsyncWebServerRequest *r, uint8_t *data, size_t len, size_t, size_t){
+    //     DynamicJsonDocument doc(256);
+    //     deserializeJson(doc, data);
+    //     strlcpy(radioData.webData.ssid, doc["ssid"] | "", sizeof(radioData.webData.ssid));
+    //     strlcpy(radioData.webData.password, doc["password"] | "", sizeof(radioData.webData.password));
+    //     strlcpy(radioData.webData.apSsid, doc["apSsid"] | "", sizeof(radioData.webData.apSsid));
+    //     strlcpy(radioData.webData.apPassword, doc["apPassword"] | "", sizeof(radioData.webData.apPassword));
+    //     r->send(200, "text/plain", "OK");
+    // });
+
+    // // 🔘 Store/Load Buttons
+    // server.on("/storeGlobal", HTTP_POST, [](AsyncWebServerRequest *r) {
+    //     radioData.storeGlobalData();
+    //     r->send(200, "text/plain", "OK");
+    // });
 
     server.begin();
 }
