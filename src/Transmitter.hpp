@@ -23,7 +23,7 @@ Transmitter::Transmitter(RadioData& newRadioData) : RadioClass(newRadioData)
 {
     // UART
     Serial1.begin(100000, SERIAL_8E2, -1, PIN_MULTI_TX);
-    uart_set_baudrate(UART_NUM_1, 100000); // TODO nötig?
+    uart_set_baudrate(UART_NUM_1, 100000); // TODO HIER LIEGT EIN PROBLEM
     Serial2.begin(100000, SERIAL_8E2, PIN_MULTI_RX, -1, true);
     uart_set_baudrate(UART_NUM_2, 100000);
     Serial2.setTimeout(4);
@@ -125,6 +125,6 @@ bool Transmitter::sendTx(void *)
     }
 
     // Send Data
-    Serial1.write(txData,27);
+    // Serial1.write(txData,sizeof(txData)); // TODO HIER LIEGT EIN PROBLEM
     return true;
 }

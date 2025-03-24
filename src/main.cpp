@@ -227,10 +227,9 @@ void mySerialTask(void *pvParameters) {
     Serial.printf("Max Alloc Heap: %u\n", ESP.getMaxAllocHeap());
     Serial.printf("Free Stack: %u\n", uxTaskGetStackHighWaterMark(NULL));
     Serial.printf("Task Count: %u\n", uxTaskGetNumberOfTasks());
-    esp_reset_reason_t reason = esp_reset_reason();
-    Serial.printf("🔁 Reset-Grund: %d\n", reason);
-    Serial.printf("APB Clock: %u Hz\n", esp_clk_apb_freq());    // UART hängt an APB Clock
-    Serial.printf("CPU Clock: %u Hz\n", esp_clk_cpu_freq());    // CPU Core Speed
+    Serial.printf("🔁 Reset-Grund: %d\n", esp_reset_reason());
+    // Serial.printf("APB Clock: %u Hz\n", esp_clk_apb_freq());    // UART hängt an APB Clock
+    // Serial.printf("CPU Clock: %u Hz\n", esp_clk_cpu_freq());    // CPU Core Speed
   }
 }
 
