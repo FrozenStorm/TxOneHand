@@ -1,54 +1,187 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <title>ESP32 Fernsteuerung</title>
-    <link rel="stylesheet" href="/style.css">
+  <meta charset="UTF-8">
+  <title>3 Tabs Beispiel</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+
+    .tab-header {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .tab-link {
+      padding: 10px 20px;
+      border: none;
+      background-color: #eee;
+      cursor: pointer;
+      border-radius: 5px 5px 0 0;
+    }
+
+    .tab-link.active {
+      background-color: #ccc;
+      font-weight: bold;
+    }
+
+    .tab-pane {
+      display: none;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-top: none;
+      border-radius: 0 0 5px 5px;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+  </style>
 </head>
 <body>
-<h1>ESP32 Fernsteuerung</h1>
+  <div class="tabs">
+    <div class="tab-header">
+      <button class="tab-link active" onclick="openTab(event, 'Einstellungen')">Einstellungen</button>
+      <button class="tab-link" onclick="openTab(event, 'Modellspeicher')">Live View</button>
+      <button class="tab-link" onclick="openTab(event, 'Live-Daten')">Modell</button>
+    </div>
+    <div class="tab-content">
+      <div id="Eintellungen" class="tab-pane active">
+        <h2>Einstellungen</h2>
+        <div id="einstellungenContainer">Lade Einstellungen...</div>
+        <button onclick="loadGlobal()">loadGlobal</button>
+        <button onclick="storeGlobal()">storeGlobal</button>
+        <button onclick="saveGloabl()">saveGlobal</button>
+        <h2>ESP32 OTA Firmware Update</h2>
+        <form method="POST" action="/update" enctype="multipart/form-data">
+            <input type="file" name="update">
+            <input type="submit" value="Update starten">
+        </form>
+      </div>
+      <div id="Modellspeicher" class="tab-pane">
+        <h2>Modell</h2>
+        <div id="modellspeicherContainer">Lade Modelldaten...</div>
+        <button onclick="saveModel()">Save Model</button>
+        <button onclick="loadModel()">Load Model</button>
+      </div>
+      <div id="Live-Daten" class="tab-pane">
+        <h2>Live-Daten</h2>
+        <div id="liveViewContainer">Lade Live-Daten...</div>
+        <canvas id="joystickCanvas" width="200" height="200"></canvas>
+        <div id="joystickText">x: 0.00, y: 0.00</div>
+      </div>
+    </div>
+  </div>
 
-<h2>ESP32 OTA Firmware Update !! OMG IT WORKS</h2>
-<form method="POST" action="/update" enctype="multipart/form-data">
-    <input type="file" name="update">
-    <input type="submit" value="Update starten">
-</form>
-<h2>WLAN-Einstellungen</h2>
-<form method="POST" action="/save-wifi">
-    <label>SSID:</label>
-    <input type="text" name="ssid" required><br>
-    <label>Passwort:</label>
-    <input type="password" name="password" required><br>
-    <input type="submit" value="Speichern & Neustarten">
-</form>
+  <script>
+    function openTab(evt, tabId) {
+      const panes = document.querySelectorAll(".tab-pane");
+      const links = document.querySelectorAll(".tab-link");
 
-<div class="tabs">
-    <button onclick="openTab('settings')">Einstellungen</button>
-    <button onclick="openTab('live')">Live View</button>
-    <button onclick="openTab('model')">Modell</button>
-</div>
+      panes.forEach(p => p.classList.remove("active"));
+      links.forEach(l => l.classList.remove("active"));
 
-<div id="settings" class="tab-content">
-    <h2>Einstellungen</h2>
-    <div id="settingsContent"></div>
-    <button onclick="saveSettings()">Speichern</button>
-    <button onclick="storeGlobal()">storeGlobal</button>
-</div>
+      document.getElementById(tabId).classList.add("active");
+      evt.currentTarget.classList.add("active");
+    }
 
-<div id="live" class="tab-content hidden">
-    <h2>Live View</h2>
-    <div id="liveContent"></div>
-    <canvas id="joystickCanvas" width="200" height="200"></canvas>
-    <div id="joystickText">x: 0.00, y: 0.00</div>
-</div>
+    // 🧠 Globale Daten laden/speichern
+    function loadGlobal() {
+    fetch("/global")
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById("einstellungenContainer").innerHTML = `
+                <label>SSID:</label><input id="ssid" class="form-control mb-2" value="${data.ssid}">
+                <label>Passwort:</label><input id="password" class="form-control mb-2" value="${data.password}">
+            `;
+        });
+    }
+    function storeGlobal() {
+        const ssid = document.getElementById("ssid").value;
+        const password = document.getElementById("password").value;
+        fetch("/global", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ssid, password})
+        }).then(() => alert("Globale Daten gespeichert"));
+    }
+    function saveGlobal() {
+        fetch("/saveGlobal", {method: "POST"}).then(() => alert("Global gespeichert"));
+    }
 
-<div id="model" class="tab-content hidden">
-    <h2>Modell</h2>
-    <div id="modelContent"></div>
-    <button onclick="saveModel()">Save Model</button>
-    <button onclick="loadModel()">Load Model</button>
-</div>
+    // 🧠 Modell laden/speichern
+    function loadModel() {
+    fetch("/loadModel", {method: "POST"}).then(() => {
+        alert("Modell geladen");
+        loadModelData();
+    });
+    }
+    function saveModel() {
+    fetch("/saveModel", {method: "POST"}).then(() => {
+        alert("Modell gespeichert");
+    });
 
-<script src="/script.js"></script>
+    // 📡 Live-Daten laden
+    function loadLiveView() {
+    fetch("/digital")
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById("Live-Daten").innerHTML = `
+                <p><strong>Arm:</strong> ${data.arm}</p>
+                <p><strong>Pitch:</strong> ${data.pitch.toFixed(2)}</p>
+                <p><strong>Roll:</strong> ${data.roll.toFixed(2)}</p>
+                <p><strong>Yaw:</strong> ${data.yaw.toFixed(2)}</p>
+                <p><strong>Altitude:</strong> ${data.altitude.toFixed(2)}</p>
+                <p><strong>Temperature:</strong> ${data.temperature.toFixed(2)} °C</p>
+                <p><strong>Orientation:</strong> ${data.orientation}</p>
+            `;
+            updateJoystick(data.stickLeftRight, data.stickUpDown);
+        });
+    }
+
+    // 🎮 Joystick-Canvas aktualisieren
+    function updateJoystick(x, y) {
+        const canvas = document.getElementById("joystickCanvas");
+        const ctx = canvas.getContext("2d");
+        const w = canvas.width;
+        const h = canvas.height;
+
+        const centerX = w / 2;
+        const centerY = h / 2;
+
+        const px = centerX + (x * centerX);
+        const py = centerY - (y * centerY);
+
+        ctx.clearRect(0, 0, w, h);
+        ctx.strokeStyle = "#ccc";
+        ctx.strokeRect(0, 0, w, h);
+        ctx.beginPath();
+        ctx.moveTo(centerX, 0);
+        ctx.lineTo(centerX, h);
+        ctx.moveTo(0, centerY);
+        ctx.lineTo(w, centerY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(px, py, 10, 0, 2 * Math.PI);
+        ctx.fillStyle = "#007bff";
+        ctx.fill();
+        ctx.strokeStyle = "#000";
+        ctx.stroke();
+
+        document.getElementById("joystickText").innerText = `x: ${x.toFixed(2)}, y: ${y.toFixed(2)}`;
+        }
+    }
+    // 🏁 Initialisierung
+    window.onload = function () {
+        loadGlobal();
+        loadModel();
+        loadLiveView();
+        setInterval(loadLiveView, 1000);
+    };
+  </script>
 </body>
 </html>
