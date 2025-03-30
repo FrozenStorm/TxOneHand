@@ -50,7 +50,7 @@ void mySerialTask(void *pvParameters);
 
 /* -------------------- Setup ----------------------------------------------------------------------------------*/
 void setup() {
-  delay(3000);
+  // delay(5000);
   Serial.begin(115200);
   Serial.println("Init started");
 
@@ -63,8 +63,8 @@ void setup() {
   // Load Models
   radioData.loadGlobalData();
   radioData.loadModelData();
-  radioData.storeGlobalData();
-  radioData.storeModelData();
+  // radioData.storeGlobalData();
+  // radioData.storeModelData();
   Serial.println("Model loaded");
 
 
@@ -82,7 +82,7 @@ void setup() {
 
   // Create Tasks
   xTaskCreatePinnedToCore(myMainTask, "MainTask", 20000, NULL, 2, NULL, 1);
-  xTaskCreatePinnedToCore(mySerialTask, "SerialTask", 10000, NULL, 1, NULL, 1);
+  // xTaskCreatePinnedToCore(mySerialTask, "SerialTask", 10000, NULL, 1, NULL, 1);
   
   Serial.println("Init done");
 }
@@ -222,11 +222,11 @@ void mySerialTask(void *pvParameters) {
     // Serial.print("radioData.modelData.modelName = "); Serial.println(radioData.getModelName());
 
     Serial.println("**** FreeRTOS ****");
-    Serial.printf("Free Heap: %u\n", ESP.getFreeHeap());
-    Serial.printf("Min Free Heap: %u\n", ESP.getMinFreeHeap());
-    Serial.printf("Max Alloc Heap: %u\n", ESP.getMaxAllocHeap());
-    Serial.printf("Free Stack: %u\n", uxTaskGetStackHighWaterMark(NULL));
-    Serial.printf("Task Count: %u\n", uxTaskGetNumberOfTasks());
+    // Serial.printf("Free Heap: %u\n", ESP.getFreeHeap());
+    // Serial.printf("Min Free Heap: %u\n", ESP.getMinFreeHeap());
+    // Serial.printf("Max Alloc Heap: %u\n", ESP.getMaxAllocHeap());
+    // Serial.printf("Free Stack: %u\n", uxTaskGetStackHighWaterMark(NULL));
+    // Serial.printf("Task Count: %u\n", uxTaskGetNumberOfTasks());
     Serial.printf("🔁 Reset-Grund: %d\n", esp_reset_reason());
     // Serial.printf("APB Clock: %u Hz\n", esp_clk_apb_freq());    // UART hängt an APB Clock
     // Serial.printf("CPU Clock: %u Hz\n", esp_clk_cpu_freq());    // CPU Core Speed

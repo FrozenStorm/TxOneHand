@@ -20,9 +20,9 @@ public:
     struct WebData
     {
         char ssid[16];
-        char password[16];
+        char password[20];
         char apSsid[16];
-        char apPassword[16];
+        char apPassword[20];
     };
     WebData webData;
 
