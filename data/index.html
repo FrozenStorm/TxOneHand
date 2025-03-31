@@ -2,89 +2,206 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Live View</title>
+  <title>Z-Craft Live View</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: sans-serif; margin: 20px; }
-    .box { font-size: 2em; margin-top: 20px; }
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #1a1a1a;
+      color: #fff;
+    }
+
+    header {
+      background-color: #000;
+      padding: 20px;
+      text-align: center;
+    }
+
+    header img {
+      max-width: 250px;
+      height: auto;
+    }
+
+    h1 {
+      font-size: 1.6em;
+      margin: 30px 0 10px;
+      text-align: center;
+      color: #e60000;
+    }
+
+    .section {
+      margin: 20px;
+      padding: 20px;
+      background-color: #2a2a2a;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+    }
+
+    .live-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      row-gap: 10px;
+      column-gap: 20px;
+      font-size: 1.1em;
+    }
+
+    .live-label {
+      text-align: right;
+      font-weight: bold;
+    }
+
+    .live-value {
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      background-color: #333;
+      color: white;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 1em;
+      background-color: #e60000;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #ff1a1a;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    @media (min-width: 600px) {
+      .form-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
   </style>
 </head>
 <body>
+
+  <header>
+    <img src="Z-Craft_color_trans.png" alt="Z-Craft Logo">
+  </header>
+
   <h1>Live View</h1>
-  <div id="batteryVoltage" class="box">Lade...</div>
-  <div id="pitch" class="box">Lade...</div>
-  <div id="roll" class="box">Lade...</div>
-  <div id="throttle" class="box">Lade...</div>
-  <div id="armed" class="box">Lade...</div>
-  <div id="orientation" class="box">Lade...</div>
-  <div id="stickLeftRight" class="box">Lade...</div>
-  <div id="stickUpDown" class="box">Lade...</div>
-  <div id="trimRoll" class="box">Lade...</div>
-  <div id="trimPitch" class="box">Lade...</div>
-  <h1>Configuration</h1>
-  <h1>WLAN</h1>
-  <label>SSID: <input id="ssid" type="text"></label><br><br>
-  <label>Passwort: <input id="password" type="password"></label><br><br>
-  <label>AP SSID: <input id="aPssid" type="text"></label><br><br>
-  <label>AP Passwort: <input id="aPpassword" type="password"></label><br><br>
-  <button onclick="saveWlan()">Save WLAN</button>
+  <div class="section">
+    <div class="live-grid">
+      <div class="live-label">Battery:</div><div id="batteryVoltage" class="live-value">Lade...</div>
+      <div class="live-label">Pitch:</div><div id="pitch" class="live-value">Lade...</div>
+      <div class="live-label">Roll:</div><div id="roll" class="live-value">Lade...</div>
+      <div class="live-label">Throttle:</div><div id="throttle" class="live-value">Lade...</div>
+      <div class="live-label">Armed:</div><div id="armed" class="live-value">Lade...</div>
+      <div class="live-label">Orientation:</div><div id="orientation" class="live-value">Lade...</div>
+      <div class="live-label">Stick Left/Right:</div><div id="stickLeftRight" class="live-value">Lade...</div>
+      <div class="live-label">Stick Up/Down:</div><div id="stickUpDown" class="live-value">Lade...</div>
+      <div class="live-label">Trim Roll:</div><div id="trimRoll" class="live-value">Lade...</div>
+      <div class="live-label">Trim Pitch:</div><div id="trimPitch" class="live-value">Lade...</div>
+    </div>
+  </div>
+
+  <h1>WLAN-Konfiguration</h1>
+  <div class="section">
+    <div class="form-grid">
+      <div>
+        <label for="ssid">SSID</label>
+        <input id="ssid" type="text">
+      </div>
+      <div>
+        <label for="password">Passwort</label>
+        <input id="password" type="password">
+      </div>
+      <div>
+        <label for="aSsid">AP SSID</label>
+        <input id="apSsid" type="text">
+      </div>
+      <div>
+        <label for="apPassword">AP Passwort</label>
+        <input id="apPassword" type="text">
+      </div>
+    </div>
+    <button onclick="saveWlan()">Speichern</button>
+  </div>
 
   <script>
     function saveWlan() {
       const ssid = document.getElementById('ssid').value;
       const password = document.getElementById('password').value;
-      const aPssid = document.getElementById('aPssid').value;
-      const aPpassword = document.getElementById('aPpassword').value;
+      const apSsid = document.getElementById('apSsid').value;
+      const apPassword = document.getElementById('apPassword').value;
       fetch('/saveWlan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ssid, password })
+        body: JSON.stringify({ ssid, password, apSsid, apPassword })
       })
       .then(response => response.json())
       .then(data => {
-        if (data.success) {
-          alert('Konfiguration gespeichert!');
-        } else {
-          alert('Fehler beim Speichern der Konfiguration!');
-        }
+        alert(data.success ? 'Konfiguration gespeichert!' : 'Fehler beim Speichern!');
       })
       .catch(err => console.error(err));
-      loadWlan();
     }
+
     function loadWlan() {
       fetch('/loadWlan')
         .then(response => response.json())
         .then(data => {
           document.getElementById('ssid').value = data.ssid || '';
           document.getElementById('password').value = data.password || '';
-          document.getElementById('aPssid').value = data.aPssid || '';
-          document.getElementById('aPpassword').value = data.aPpassword || '';
+          document.getElementById('apSsid').value = data.apSsid || '';
+          document.getElementById('apPassword').value = data.apPassword || '';
         })
         .catch(err => console.error(err));
     }
+
     function updateLiveView() {
       fetch('/liveView')
         .then(response => response.json())
         .then(data => {
-            document.getElementById('batteryVoltage').textContent = "Battery = " + data.batteryVoltage.toFixed(2) + ' V';
-            document.getElementById('pitch').textContent = "Pitch = " + data.pitch.toFixed(2)*100 + ' %';
-            document.getElementById('roll').textContent = "Roll = " + data.roll.toFixed(2)*100 + ' %';
-            document.getElementById('throttle').textContent = "Throttle = " + data.throttle.toFixed(2)*100 + ' %';
-            document.getElementById('armed').textContent = "Armed = " + (data.armed ? 'Ja' : 'Nein');
-            document.getElementById('orientation').textContent = "Orientation = " + data.orientation;
-            document.getElementById('stickLeftRight').textContent = "Stick Left/Right = " + data.stickLeftRight.toFixed(2)*100 + ' %';
-            document.getElementById('stickUpDown').textContent = "Stick Up/Down = " + data.stickUpDown.toFixed(2)*100 + ' %';
-            document.getElementById('trimRoll').textContent = "Trim Roll = " + data.trimRoll.toFixed(2)*100 + ' %';
-            document.getElementById('trimPitch').textContent = "Trim Pitch = " + data.trimPitch.toFixed(2)*100 + ' %';
+          document.getElementById('batteryVoltage').textContent = data.batteryVoltage.toFixed(2) + ' V';
+          document.getElementById('pitch').textContent = (data.pitch * 100).toFixed(1) + ' %';
+          document.getElementById('roll').textContent = (data.roll * 100).toFixed(1) + ' %';
+          document.getElementById('throttle').textContent = (data.throttle * 100).toFixed(1) + ' %';
+          document.getElementById('armed').textContent = data.armed ? 'Yes' : 'No';
+          document.getElementById('orientation').textContent = data.orientation;
+          document.getElementById('stickLeftRight').textContent = (data.stickLeftRight * 100).toFixed(1) + ' %';
+          document.getElementById('stickUpDown').textContent = (data.stickUpDown * 100).toFixed(1) + ' %';
+          document.getElementById('trimRoll').textContent = (data.trimRoll * 100).toFixed(1) + ' %';
+          document.getElementById('trimPitch').textContent = (data.trimPitch * 100).toFixed(1) + ' %';
         })
         .catch(err => {
-          document.getElementById('voltage').textContent = 'Fehler';
+          document.getElementById('batteryVoltage').textContent = 'Fehler beim Laden';
           console.error(err);
         });
     }
 
-    setInterval(updateLiveView, 1000); // jede Sekunde
-    updateLiveView(); // sofort beim Start
-    loadWlan(); // sofort beim Start
+    setInterval(updateLiveView, 200);
+    updateLiveView();
+    loadWlan();
   </script>
 </body>
 </html>

@@ -13,6 +13,9 @@ extern const uint8_t style_css_start[] asm("_binary_data_style_css_start");
 extern const uint8_t style_css_end[] asm("_binary_data_style_css_end");
 extern const uint8_t script_js_start[] asm("_binary_data_script_js_start");
 extern const uint8_t script_js_end[] asm("_binary_data_script_js_end");
+extern const uint8_t z_craft_logo_start[] asm("_binary_data_Z_Craft_color_invert_trans_png_start");
+extern const uint8_t z_craft_logo_end[] asm("_binary_data_Z_Craft_color_invert_trans_png_end");
+
 
 extern RadioData radioData;
 AsyncWebServer server(80);
@@ -37,8 +40,8 @@ void initWeb(void *pvParameters)
 
     if (WiFi.status() != WL_CONNECTED) {
       Serial.println("\nVerbindung fehlgeschlagen. Starte Access Point...");
-      Serial.printf("Start Access Point: %s, %s\n", "TxOneMove", "12345678");
-      WiFi.softAP("TxOneMove", "12345678");
+      Serial.printf("Start Access Point: %s, %s\n", radioData.webData.apSsid, radioData.webData.apPassword);
+      WiFi.softAP(radioData.webData.apSsid, radioData.webData.apPassword);
     } else {
         Serial.printf("\nVerbunden! IP-Adresse: %s\n", WiFi.localIP().toString().c_str());
     }
@@ -49,6 +52,14 @@ void initWeb(void *pvParameters)
         serveStaticFile(request, "text/html", index_html_start, index_html_end - index_html_start);
         Serial.println("GET / done");
     });
+
+    // Logo-Datei
+    server.on("/Z-Craft_color_trans.png", HTTP_GET, [](AsyncWebServerRequest *request) {
+        Serial.println("GET /Z-Craft_color_trans.png");
+        serveStaticFile(request, "image/png", z_craft_logo_start, z_craft_logo_end - z_craft_logo_start);
+        Serial.println("GET /Z-Craft_color_trans.png done");
+    });
+    
 
     // // CSS-Datei
     // server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
