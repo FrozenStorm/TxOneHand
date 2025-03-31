@@ -20,8 +20,47 @@
   <div id="stickUpDown" class="box">Lade...</div>
   <div id="trimRoll" class="box">Lade...</div>
   <div id="trimPitch" class="box">Lade...</div>
+  <h1>Configuration</h1>
+  <h1>WLAN</h1>
+  <label>SSID: <input id="ssid" type="text"></label><br><br>
+  <label>Passwort: <input id="password" type="password"></label><br><br>
+  <label>AP SSID: <input id="aPssid" type="text"></label><br><br>
+  <label>AP Passwort: <input id="aPpassword" type="password"></label><br><br>
+  <button onclick="saveWlan()">Save WLAN</button>
 
   <script>
+    function saveWlan() {
+      const ssid = document.getElementById('ssid').value;
+      const password = document.getElementById('password').value;
+      const aPssid = document.getElementById('aPssid').value;
+      const aPpassword = document.getElementById('aPpassword').value;
+      fetch('/saveWlan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ssid, password })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Konfiguration gespeichert!');
+        } else {
+          alert('Fehler beim Speichern der Konfiguration!');
+        }
+      })
+      .catch(err => console.error(err));
+      loadWlan();
+    }
+    function loadWlan() {
+      fetch('/loadWlan')
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('ssid').value = data.ssid || '';
+          document.getElementById('password').value = data.password || '';
+          document.getElementById('aPssid').value = data.aPssid || '';
+          document.getElementById('aPpassword').value = data.aPpassword || '';
+        })
+        .catch(err => console.error(err));
+    }
     function updateLiveView() {
       fetch('/liveView')
         .then(response => response.json())
@@ -45,6 +84,7 @@
 
     setInterval(updateLiveView, 1000); // jede Sekunde
     updateLiveView(); // sofort beim Start
+    loadWlan(); // sofort beim Start
   </script>
 </body>
 </html>

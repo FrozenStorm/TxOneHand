@@ -138,6 +138,33 @@ void initWeb(void *pvParameters)
         r->send_P(200, "application/json", json.c_str());
         Serial.println("GET /liveView done");
     });
+
+    server.on("/loadWlan", HTTP_GET, [](AsyncWebServerRequest *r) {
+        Serial.println("GET /loadWlan");
+        DynamicJsonDocument doc(256);
+        doc["ssid"] = radioData.webData.ssid;
+        doc["password"] = radioData.webData.password;
+        doc["apSsid"] = radioData.webData.apSsid;
+        doc["apPassword"] = radioData.webData.apPassword;
+        String json; serializeJson(doc, json);
+        r->send_P(200, "application/json", json.c_str());
+        Serial.println("GET /loadWlan done");
+    });
+
+    server.on("/saveWlan", HTTP_POST, [](AsyncWebServerRequest *r){}, NULL, [](AsyncWebServerRequest *r, uint8_t *data, size_t len, size_t, size_t){
+        Serial.println("POST /saveWlan");
+        DynamicJsonDocument doc(256);
+        deserializeJson(doc, data);
+        strlcpy(radioData.webData.ssid, doc["ssid"] | "", sizeof(radioData.webData.ssid));
+        strlcpy(radioData.webData.password, doc["password"] | "", sizeof(radioData.webData.password));
+        strlcpy(radioData.webData.apSsid, doc["apSsid"] | "", sizeof(radioData.webData.apSsid));
+        strlcpy(radioData.webData.apPassword, doc["apPassword"] | "", sizeof(radioData.webData.apPassword));
+        radioData.storeGlobalData();
+        r->send_P(200, "text/plain", "OK");
+        Serial.println("POST /saveWlan done");
+    });
+
+
     server.begin();
 
     vTaskDelete(NULL);
