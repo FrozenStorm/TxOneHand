@@ -3,7 +3,6 @@ function openTab(id) {
   document.getElementById(id).classList.remove('hidden');
 }
 
-// Der Rest bleibt gleich wie vorher
 // 🌐 Laden der Einstellungen
 function loadSettings() {
   fetch("/web")
@@ -12,8 +11,6 @@ function loadSettings() {
           document.getElementById("settingsContent").innerHTML = `
               <label>SSID:</label><input id="ssid" class="form-control mb-2" value="${data.ssid}">
               <label>Passwort:</label><input id="password" class="form-control mb-2" value="${data.password}">
-              <label>AP-SSID:</label><input id="apSsid" class="form-control mb-2" value="${data.apSsid}">
-              <label>AP-Passwort:</label><input id="apPassword" class="form-control mb-2" value="${data.apPassword}">
           `;
       });
 }
@@ -22,8 +19,6 @@ function saveSettings() {
   const data = {
       ssid: document.getElementById("ssid").value,
       password: document.getElementById("password").value,
-      apSsid: document.getElementById("apSsid").value,
-      apPassword: document.getElementById("apPassword").value
   };
   fetch("/web", {
       method: "POST",
@@ -32,9 +27,7 @@ function saveSettings() {
   }).then(() => alert("Gespeichert"));
 }
 
-function storeGlobal() {
-  fetch("/storeGlobal", {method: "POST"}).then(() => alert("Global gespeichert"));
-}
+
 
 // 📡 Live-Daten laden
 function loadLiveView() {
