@@ -2,6 +2,7 @@
 
 #include "RadioClass.hpp"
 
+#define BATTERY_WARNING_VOLTAGE 3.5 // Voltage at which the TX module will warn about low battery
 
 class DigitalToFunction : public RadioClass
 {
@@ -48,7 +49,7 @@ void DigitalToFunction::doFunction()
     } 
 
     // Batterie
-    if(radioData.analogData.battery > 3.6)
+    if(radioData.analogData.battery > BATTERY_WARNING_VOLTAGE && radioData.transmitterData.receiverBatteryVoltage > (2*BATTERY_WARNING_VOLTAGE))
     {
         digitalWrite(PIN_LED,1);
         digitalWrite(PIN_VIBRATION,0);
@@ -60,7 +61,7 @@ void DigitalToFunction::doFunction()
         if(slowDown % 10 == 0) 
         {
             digitalWrite(PIN_LED,digitalRead(PIN_LED) == 1 ? 0 : 1);
-            digitalWrite(PIN_VIBRATION,digitalRead(PIN_VIBRATION) == 1 ? 0 : 1);
+            // digitalWrite(PIN_VIBRATION,digitalRead(PIN_VIBRATION) == 1 ? 0 : 1);
         }
     }
 }

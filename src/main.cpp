@@ -168,7 +168,7 @@ void mySerialTask(void *pvParameters) {
     // Serial.print("AP IP-Adresse = ");Serial.println(WiFi.softAPIP());
     // Serial.printf("Freier Heap = %u Bytes\n", ESP.getFreeHeap());
 
-    // Serial.println("**** DigitalData ****");
+    Serial.println("**** DigitalData ****");
     // Serial.print("radioData.digitalData.stickLeftRight = "); Serial.println(radioData.digitalData.stickLeftRight);
     // Serial.print("radioData.digitalData.stickUpDown = "); Serial.println(radioData.digitalData.stickUpDown);
     // Serial.print("radioData.digitalData.arm = "); Serial.println(radioData.digitalData.arm);
@@ -180,7 +180,7 @@ void mySerialTask(void *pvParameters) {
     // Serial.print("radioData.digitalData.temperature = "); Serial.println(radioData.digitalData.temperature);
     Serial.print("radioData.digitalData.orientation = "); Serial.println(radioData.orientationNames[radioData.digitalData.orientation]);
 
-    // Serial.println("**** FunctionData ****");
+    Serial.println("**** FunctionData ****");
     Serial.print("radioData.functionData.pitch = "); Serial.println(radioData.functionData.pitch);
     Serial.print("radioData.functionData.roll = "); Serial.println(radioData.functionData.roll);
     Serial.print("radioData.functionData.throttle = "); Serial.println(radioData.functionData.throttle);
@@ -216,20 +216,15 @@ void mySerialTask(void *pvParameters) {
     // Serial.print("radioData.dualRateData.pitch = "); Serial.println(radioData.dualRateData.pitch);
     // Serial.print("radioData.dualRateData.throttle = "); Serial.println(radioData.dualRateData.throttle);
 
-    // Serial.println("**** TrimData ****");
+    Serial.println("**** TrimData ****");
     Serial.print("radioData.trimData.roll = "); Serial.println(radioData.trimData.roll);
     Serial.print("radioData.trimData.pitch = "); Serial.println(radioData.trimData.pitch);
 
     // Serial.println("**** MixerData ****");
     // Serial.print("radioData.mixerData.throttleToPitch = "); Serial.println(radioData.mixerData.throttleToPitch);
 
-    // Serial.println("**** TransmitterData ****");
-    // Serial.print("radioData.transmitterData.bindingState = "); Serial.println(radioData.bindingStateNames[radioData.transmitterData.bindingState]);
-    // Serial.print("radioData.transmitterData.selectedProtocol = "); Serial.println(radioData.transmitterData.selectedProtocol);
-    // Serial.print("radioData.transmitterData.selectedSubProtocol = "); Serial.println(radioData.transmitterData.selectedSubProtocol);
-    // Serial.print("radioData.transmitterData.rangeCheck = "); Serial.println(radioData.transmitterData.rangeCheck);
-    // Serial.print("radioData.transmitterData.rxNum = "); Serial.println(radioData.transmitterData.rxNum);
-    // Serial.print("radioData.transmitterData.powerValue = "); Serial.println(radioData.powerValueNames[radioData.transmitterData.powerValue]);
+    Serial.println("**** TransmitterData ****");
+    Serial.print("radioData.transmitterData.receiverBatteryVoltage = "); Serial.println(radioData.transmitterData.receiverBatteryVoltage);
 
     // Serial.println("**** FunctionToChannelData ****");
     // for (int i = 0; i < SUPPORTED_CHANNELS; i++)
@@ -275,13 +270,13 @@ void mySerialTask(void *pvParameters) {
     // Serial.println("**** ModelData ****");
     // Serial.print("radioData.modelData.modelName = "); Serial.println(radioData.getModelName());
 
-    Serial.println("**** FreeRTOS ****");
+    // Serial.println("**** FreeRTOS ****");
     // Serial.printf("Free Heap: %u\n", ESP.getFreeHeap());
     // Serial.printf("Min Free Heap: %u\n", ESP.getMinFreeHeap());
     // Serial.printf("Max Alloc Heap: %u\n", ESP.getMaxAllocHeap());
     // Serial.printf("Free Stack: %u\n", uxTaskGetStackHighWaterMark(NULL));
     // Serial.printf("Task Count: %u\n", uxTaskGetNumberOfTasks());
-    Serial.printf("🔁 Reset-Grund: %d\n", esp_reset_reason());
+    // Serial.printf("🔁 Reset-Grund: %d\n", esp_reset_reason());
     // Serial.printf("APB Clock: %u Hz\n", esp_clk_apb_freq());    // UART hängt an APB Clock
     // Serial.printf("CPU Clock: %u Hz\n", esp_clk_cpu_freq());    // CPU Core Speed
   }

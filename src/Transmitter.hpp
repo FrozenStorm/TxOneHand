@@ -21,6 +21,8 @@ class Transmitter : public RadioClass
 private:
     uint8_t txData[CRSF_FRAME_SIZE_MAX];
     uint8_t rxData[CRSF_FRAME_SIZE_MAX];
+    uint8_t rxPos = 0;
+    uint8_t rxState = 0;   // 0: sync wait, 1: length, 2: type, 3: payload+CRC
     unsigned char crc8tab[256] = {
                                     0x00, 0xD5, 0x7F, 0xAA, 0xFE, 0x2B, 0x81, 0x54, 0x29, 0xFC, 0x56, 0x83, 0xD7, 0x02, 0xA8, 0x7D,
                                     0x52, 0x87, 0x2D, 0xF8, 0xAC, 0x79, 0xD3, 0x06, 0x7B, 0xAE, 0x04, 0xD1, 0x85, 0x50, 0xFA, 0x2F,
@@ -41,6 +43,7 @@ private:
     uint8_t crc8(const uint8_t * ptr, uint8_t length);
     void packChannels(uint8_t *output);
     bool sendTx(void);
+    bool receiveRx(void);
 public:
     Transmitter(RadioData& newRadioData);
     void doFunction();
@@ -49,13 +52,13 @@ public:
 Transmitter::Transmitter(RadioData& newRadioData) : RadioClass(newRadioData)
 {
     Serial1.begin(400000, SERIAL_8N1, PIN_TX_MODULE_RTX, 37);
-    pinMode(PIN_TX_MODULE_RTX, INPUT);
+    pinMode(PIN_TX_MODULE_RTX, INPUT_PULLUP);
 }
 
 void Transmitter::doFunction()
 {
+    receiveRx();
     sendTx();
-    // TODO receive telemetry
 }
 
 uint8_t Transmitter::crc8(const uint8_t * ptr, uint8_t length)
@@ -96,7 +99,59 @@ bool Transmitter::sendTx()
     Serial1.write(txData, TOTAL_LENGTH);
     Serial1.flush();
     Serial1.begin(400000, SERIAL_8N1, PIN_TX_MODULE_RTX, 37);
-    pinMode(PIN_TX_MODULE_RTX, INPUT);
+    pinMode(PIN_TX_MODULE_RTX, INPUT_PULLUP);
 
     return true;
+}
+
+bool Transmitter::receiveRx()
+{
+  while (Serial1.available()) {
+    uint8_t byte = Serial1.read();
+    switch (rxState) {
+      case 0:  // Sync Byte warten
+        if (byte == CRSF_ADDRESS_REMOTE_CONTROL) {
+          // Serial.println("CRSF: Sync Byte empfangen");
+          rxState = 1;
+          rxPos = 0;
+          rxData[rxPos++] = byte;
+        }
+        break;
+        
+      case 1:  // Length
+        rxData[rxPos++] = byte;
+        rxState = 2;
+        break;
+        
+      case 2:  // Type (Adressfeld)
+        rxData[rxPos++] = byte;
+        if (byte == CRSF_BATTERY_TYPE) {  // Battery Sensor?
+          rxState = 3;
+        } else {
+          rxState = 0;  // Nur Battery verarbeiten
+        }
+        break;
+        
+      case 3:  // Payload + CRC sammeln
+        // Serial.printf("CRSF: Battery Byte empfangen %x\n", byte );
+        rxData[rxPos++] = byte;
+        uint8_t len = rxData[1];
+        if (rxPos >= len + 2) {  // Vollständig: DeviceAddr(1) + Type(1) + Payload(len-4) + CRC(1) + Len(1)? Warte, Standard: Sync+Len+Type+Payload+(Len-3)+CRC
+          // CRC prüfen (über Len+Type+Payload)
+          uint8_t calc_crc = crc8(&rxData[2], len-1);
+          if (calc_crc == rxData[rxPos - 1]) {
+            // Battery Daten extrahieren (Payload start bei Index 3)
+            uint16_t voltage = (rxData[3] << 8) | rxData[4];      // mV
+            uint16_t current = (rxData[5] << 8) | rxData[6];      // mA
+            uint16_t consumption = (rxData[7] << 8) | rxData[8];  // mAh
+            radioData.transmitterData.receiverBatteryVoltage = voltage / 10.0;  // 0.01V steps -> Volt
+            float a = current / 10.0;  // 0.01A steps -> Amp
+          }
+          rxState = 0;
+          rxPos = 0;
+        }
+        break;
+    }
+  }
+  return true;
 }
