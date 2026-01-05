@@ -160,7 +160,7 @@ public:
 
     struct TransmitterData
     {
-
+        float receiverBatteryVoltage = 0;
     };
     TransmitterData transmitterData;
     
@@ -322,8 +322,8 @@ void RadioData::loadGlobalData()
     pref.getBytes("wd.ap", webData.apPassword, sizeof(webData.apPassword));
 
     analogToDigitalData.longPressDurationMs = pref.getInt("atdd.lpdm", 600);
-    analogToDigitalData.throttleLimit.min = pref.getFloat("atdd.tl.min", 1.7);
-    analogToDigitalData.throttleLimit.max = pref.getFloat("atdd.tl.max", 2.1);
+    analogToDigitalData.throttleLimit.min = pref.getFloat("atdd.tl.min", 1.8);
+    analogToDigitalData.throttleLimit.max = pref.getFloat("atdd.tl.max", 2.3);
     pref.end();
 }
 

@@ -46,8 +46,15 @@ AnalogToDigital::AnalogToDigital(RadioData& newRadioData) : RadioClass(newRadioD
 
 void AnalogToDigital::doFunction()
 {
-    radioData.rawData.battery = adc1_get_raw(PIN_VBAT);
-    radioData.rawData.throttle = adc1_get_raw(PIN_THROTTLE);
+    radioData.rawData.battery = radioData.rawData.battery * 0.9 + 0.1 * adc1_get_raw(PIN_VBAT);
+
+    radioData.rawData.throttle = 0;
+    for(int i = 0; i < 20; i++){
+        
+        radioData.rawData.throttle += adc1_get_raw(PIN_THROTTLE);
+    }
+    radioData.rawData.throttle = radioData.rawData.throttle / 20;
+    
 
     radioData.analogData.battery = 2 * esp_adc_cal_raw_to_voltage(radioData.rawData.battery, &adc_chars)/1000.0;
     radioData.analogData.throttle = esp_adc_cal_raw_to_voltage(radioData.rawData.throttle, &adc_chars)/1000.0;
@@ -110,10 +117,10 @@ void AnalogToDigital::getLongPress(bool& longPressEvent, unsigned int& startTime
 float AnalogToDigital::throttleToDigital(float value, const RadioData::AnalogToDigitalData::ThrottleLimit& limit)
 {
     float b = limit.min;
-    float a = (limit.max - b) / (2*2);
+    float a = (limit.max - b);
     // Umwandeln von analog Bereich zu +/- 1
     if(((value - b) > 0) && (a > 0)){
-        value = sqrt((value - b)/a)-1;
+        value = 2*sqrt((value - b)/a)-1;
     }
     else{
         value = -1;
