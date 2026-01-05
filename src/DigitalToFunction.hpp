@@ -49,7 +49,7 @@ void DigitalToFunction::doFunction()
     } 
 
     // Batterie
-    if(radioData.analogData.battery > BATTERY_WARNING_VOLTAGE && radioData.transmitterData.receiverBatteryVoltage > (2*BATTERY_WARNING_VOLTAGE))
+    if(radioData.analogData.battery > BATTERY_WARNING_VOLTAGE && (radioData.transmitterData.receiverBatteryVoltage > (2*BATTERY_WARNING_VOLTAGE) || radioData.transmitterData.receiverBatteryVoltage == 0))
     {
         digitalWrite(PIN_LED,1);
         digitalWrite(PIN_VIBRATION,0);
@@ -61,7 +61,7 @@ void DigitalToFunction::doFunction()
         if(slowDown % 10 == 0) 
         {
             digitalWrite(PIN_LED,digitalRead(PIN_LED) == 1 ? 0 : 1);
-            // digitalWrite(PIN_VIBRATION,digitalRead(PIN_VIBRATION) == 1 ? 0 : 1);
+            digitalWrite(PIN_VIBRATION,digitalRead(PIN_VIBRATION) == 1 ? 0 : 1);
         }
     }
 }
