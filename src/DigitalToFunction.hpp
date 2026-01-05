@@ -13,19 +13,11 @@ public:
 
 void DigitalToFunction::doFunction()
 {
-    // Binding
-    if(radioData.functionData.throttle > 0.5 && radioData.digitalData.trim == 1 && radioData.digitalData.armEvent == 1)
-    {
-        if(radioData.transmitterData.bindingState == radioData.BINDED || radioData.transmitterData.bindingState == radioData.BINDING_FAILED){
-            radioData.transmitterData.bindingState = radioData.BINDING_STARTED;
-        }
-    }
-
     // Trim
-    if(radioData.digitalData.trimLongPressEvent == 1 && radioData.functionData.armed == 1){
-        if(radioData.functionData.pitch != NAN && radioData.functionData.roll != NAN && radioData.analogData.pitch != NAN && radioData.analogData.roll != NAN){
-            radioData.trimData.pitch = radioData.functionData.pitch;
-            radioData.trimData.roll = radioData.functionData.roll;
+    if(radioData.digitalData.armLongPressEvent == 1 && radioData.functionData.armed == 0){ // Nur wenn aus armed mode heraus mit long press gegangen wird, wird getrimmt
+        if(radioData.digitalData.pitch != NAN && radioData.digitalData.roll != NAN && radioData.analogData.pitch != NAN && radioData.analogData.roll != NAN){
+            radioData.trimData.pitch = radioData.digitalData.pitch;
+            radioData.trimData.roll = radioData.digitalData.roll;
             radioData.sensorToDigitalData.angleLimitPitch.center = radioData.analogData.pitch;
             radioData.sensorToDigitalData.angleLimitRoll.center = radioData.analogData.roll;
             radioData.storeTrimData();
@@ -46,8 +38,7 @@ void DigitalToFunction::doFunction()
     {
         radioData.functionData.pitch = radioData.digitalData.pitch;
         radioData.functionData.roll = radioData.digitalData.roll;
-        radioData.functionData.throttle = -1+2*sqrt(radioData.digitalData.stickUpDown * radioData.digitalData.stickUpDown + radioData.digitalData.stickLeftRight * radioData.digitalData.stickLeftRight);
-        limitValue(radioData.functionData.throttle);
+        radioData.functionData.throttle = radioData.digitalData.throttle;
     }
     else
     {

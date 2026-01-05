@@ -3,14 +3,10 @@
 #include "RadioClass.hpp"
 #include "esp_adc_cal.h"
 
-#define PIN_ROLL                ADC1_CHANNEL_0 // GPIO01 // ADC1_CH0
-#define PIN_PITCH               ADC1_CHANNEL_3 // GPIO04 // ADC1_CH4
-#define PIN_VBAT                ADC1_CHANNEL_1 // GPIO02 // ADC1_CH1
-#define PIN_LED                 8
-#define PIN_VIBRATION           5
+#define PIN_THROTTLE            ADC1_CHANNEL_0 // GPIO01
+#define PIN_VBAT                ADC1_CHANNEL_1 // GPIO02
 
-#define PIN_TRIM                9
-#define PIN_ARM                 11
+#define PIN_ARM                 9
 
 #define ADC_WIDTH_BIT           ADC_WIDTH_BIT_12
 #define ADC_ATTEN               ADC_ATTEN_DB_12
@@ -21,10 +17,8 @@ private:
     esp_adc_cal_characteristics_t   adc_chars;    
     esp_adc_cal_value_t             val_type;
     unsigned int                    changedTimeArmMs = 0;
-    unsigned int                    changedTimeTrimMs = 0;
     unsigned int                    startPressTimeArmMs = 0;
-    unsigned int                    startPressTimeTrimMs = 0;
-    float analogToDigital(float value, const RadioData::AnalogToDigitalData::StickLimit& limit);
+    float throttleToDigital(float value, const RadioData::AnalogToDigitalData::ThrottleLimit& limit);
     void getButton(const bool& value, unsigned int& changeTimeMs, bool& button, bool& buttonEvent);
     void getLongPress(bool& longPressEvent, unsigned int& startTimeMs, const bool& state, const bool& event);
 public:
@@ -34,14 +28,11 @@ public:
 
 AnalogToDigital::AnalogToDigital(RadioData& newRadioData) : RadioClass(newRadioData)
 {
-    pinMode(PIN_TRIM,INPUT_PULLUP);
-    pinMode(PIN_ARM,INPUT_PULLUP);
-    pinMode(PIN_LED,OUTPUT);
-    pinMode(PIN_VIBRATION,OUTPUT);
+    pinMode(PIN_ARM, INPUT_PULLUP);
+    pinMode(PIN_LED, OUTPUT);
+    pinMode(PIN_VIBRATION, OUTPUT);
 
     adc1_config_width(ADC_WIDTH_BIT);
-    adc1_config_channel_atten(PIN_ROLL, ADC_ATTEN);
-    adc1_config_channel_atten(PIN_PITCH, ADC_ATTEN);
     adc1_config_channel_atten(PIN_VBAT, ADC_ATTEN);
     val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN, ADC_WIDTH_BIT, 1100, &adc_chars);
     switch (val_type) {
@@ -55,21 +46,16 @@ AnalogToDigital::AnalogToDigital(RadioData& newRadioData) : RadioClass(newRadioD
 
 void AnalogToDigital::doFunction()
 {
-    radioData.rawData.stickUpDown = adc1_get_raw(PIN_PITCH);
-    radioData.rawData.stickLeftRight = adc1_get_raw(PIN_ROLL);
     radioData.rawData.battery = adc1_get_raw(PIN_VBAT);
+    radioData.rawData.throttle = adc1_get_raw(PIN_THROTTLE);
 
-    radioData.analogData.stickUpDown = esp_adc_cal_raw_to_voltage(radioData.rawData.stickUpDown, &adc_chars)/1000.0;
-    radioData.analogData.stickLeftRight = esp_adc_cal_raw_to_voltage(radioData.rawData.stickLeftRight, &adc_chars)/1000.0;
     radioData.analogData.battery = 2 * esp_adc_cal_raw_to_voltage(radioData.rawData.battery, &adc_chars)/1000.0;
+    radioData.analogData.throttle = esp_adc_cal_raw_to_voltage(radioData.rawData.throttle, &adc_chars)/1000.0;
 
-    radioData.digitalData.stickUpDown = analogToDigital(radioData.analogData.stickUpDown, radioData.analogToDigitalData.stickLimitUpDown);
-    radioData.digitalData.stickLeftRight = analogToDigital(radioData.analogData.stickLeftRight, radioData.analogToDigitalData.stickLimitLeftRight);
+    radioData.digitalData.throttle = throttleToDigital(radioData.analogData.throttle, radioData.analogToDigitalData.throttleLimit);
 
     getButton(!digitalRead(PIN_ARM),changedTimeArmMs,radioData.digitalData.arm,radioData.digitalData.armEvent);
-    getButton(!digitalRead(PIN_TRIM),changedTimeTrimMs,radioData.digitalData.trim,radioData.digitalData.trimEvent);
     getLongPress(radioData.digitalData.armLongPressEvent,startPressTimeArmMs,radioData.digitalData.arm,radioData.digitalData.armEvent);
-    getLongPress(radioData.digitalData.trimLongPressEvent,startPressTimeTrimMs,radioData.digitalData.trim,radioData.digitalData.trimEvent);
 }
 
 void AnalogToDigital::getButton(const bool& value, unsigned int& changeTimeMs, bool& button, bool& buttonEvent)
@@ -121,32 +107,16 @@ void AnalogToDigital::getLongPress(bool& longPressEvent, unsigned int& startTime
     }
 }
 
-float AnalogToDigital::analogToDigital(float value, const RadioData::AnalogToDigitalData::StickLimit& limit)
+float AnalogToDigital::throttleToDigital(float value, const RadioData::AnalogToDigitalData::ThrottleLimit& limit)
 {
-    // Umwandeln aller Werte in +/- Werte
-    float max = limit.max - limit.center;
-    float min = limit.min - limit.center;
-    value = value - limit.center;
+    float b = limit.min;
+    float a = (limit.max - b) / (2*2);
     // Umwandeln von analog Bereich zu +/- 1
-    if(value >= 0){
-        if(max != 0){
-            value = value / max;
-        }
-        else{
-
-        }
+    if(((value - b) > 0) && (a > 0)){
+        value = sqrt((value - b)/a)-1;
     }
     else{
-        if(min != 0){
-            value = value / abs(min);
-        }
-        else{
-
-        }
-    }
-    // Invertieren
-    if(limit.invert == true){
-        value = value * -1;
+        value = -1;
     }
     // Limitieren auf digital Bereich
     limitValue(value);

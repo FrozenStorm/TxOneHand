@@ -1,95 +1,50 @@
 #pragma once
 
 #include "RadioClass.hpp"
-
-#include <Adafruit_MPU6050.h>
-#include <Adafruit_BMP085.h>
-#include <Wire.h>
+#include <Adafruit_BNO055.h>
+#include <TinyGPSPlus.h>
 
 
 class SensorToDigital : public RadioClass
 {
 private:
-    Adafruit_MPU6050*   mpu;
-    Adafruit_BMP085*    bmp;
-    float               filterRate = 0.8;                
-    float               gyroRate = 0.02;
+    Adafruit_BNO055*    bno;
+    TinyGPSPlus*        gps;
 
     float analogToDigital(float value, const RadioData::SensorToDigitalData::AngleLimit& limit);
     void updateOrientation();
+    float accelToAngle(float accelValue);
     void limitToRange(float &value, float min, float max);
-    void selectAxis(float* accelPitch, float* accelRoll, float* accelYaw, float* gyroPitch, float* gyroRoll, float* gyroYaw);
+    void selectAxis();
 public:
-    SensorToDigital(RadioData& newRadioData, Adafruit_MPU6050* newMpu, Adafruit_BMP085* newBmp);
+    SensorToDigital(RadioData& newRadioData, Adafruit_BNO055* newBno, TinyGPSPlus* newGps);
     void doFunction();
 };
 
-SensorToDigital::SensorToDigital(RadioData& newRadioData, Adafruit_MPU6050* newMpu, Adafruit_BMP085* newBmp):RadioClass(newRadioData)
+SensorToDigital::SensorToDigital(RadioData& newRadioData, Adafruit_BNO055* newBno, TinyGPSPlus* newGps):RadioClass(newRadioData)
 {
-    mpu = newMpu;
-    bmp = newBmp;
+    bno = newBno;
+    gps = newGps;
 }
 
 void SensorToDigital::doFunction()
 {
-    sensors_event_t accel, gyro, temp;
-    float accelPitch, accelRoll, accelYaw;
-    float gyroPitch, gyroRoll, gyroYaw;
-
-
-    mpu->getEvent(&accel, &gyro, &temp); // 3ms
-    if (!mpu->getEvent(&accel, &gyro, &temp)) {
-        radioData.analogData.pitch = 0;
-        radioData.analogData.roll = 0;
-        radioData.digitalData.pitch = 0;
-        radioData.digitalData.roll = 0;
-        Serial.println("Fehler: Sensorwerte konnten nicht gelesen werden!");
-        return;
-    }
-    if (isnan(accel.acceleration.x) || isnan(accel.acceleration.y) || isnan(accel.acceleration.z) || isnan(gyro.gyro.x) || isnan(gyro.gyro.y) || isnan(gyro.gyro.z)){
-        radioData.analogData.pitch = 0;
-        radioData.analogData.roll = 0;
-        radioData.digitalData.pitch = 0;
-        radioData.digitalData.roll = 0;
-        Serial.println("Fehler: Beschleunigungswerte sind NaN!");
-        return;
-    }
-    // Limit to range
-    limitToRange(accel.acceleration.x, -10, 10);
-    limitToRange(accel.acceleration.y, -10, 10);  
-    limitToRange(accel.acceleration.z, -10, 10);
-    limitToRange(gyro.gyro.x, -3, 3);
-    limitToRange(gyro.gyro.y, -3, 3);
-    limitToRange(gyro.gyro.z, -3, 3);
+    // TODO: GPS Daten verarbeiten
 
     // RAW Einlesen
-    radioData.rawData.gyroX = gyro.gyro.x;
-    radioData.rawData.gyroY = -gyro.gyro.z;
-    radioData.rawData.gyroZ = -gyro.gyro.y;
-    radioData.rawData.accelX = -accel.acceleration.x;
-    radioData.rawData.accelY = -accel.acceleration.z;
-    radioData.rawData.accelZ = accel.acceleration.y;
+    imu::Vector<3> gravity = bno->getVector(Adafruit_BNO055::VECTOR_GRAVITY);
+    radioData.rawData.gravityX = gravity.x();
+    radioData.rawData.gravityY = gravity.y();
+    radioData.rawData.gravityZ = gravity.z();
 
     updateOrientation();
+    selectAxis();
 
-    selectAxis(&accelPitch, &accelRoll, &accelYaw, &gyroPitch, &gyroRoll, &gyroYaw);
-
-    // Zu analog umrechnen
-    radioData.analogData.gyroPitch = gyroPitch * 180 / PI;
-    radioData.analogData.gyroRoll = gyroRoll * 180 / PI;
-    radioData.analogData.gyroYaw = gyroYaw * 180 / PI;
-
-
-    radioData.analogData.accelPitch = atan2(accelPitch, accelYaw) * 180 / PI;
-    radioData.analogData.accelRoll = atan2(accelRoll, accelYaw) * 180 / PI;
-    // TODO radioData.analogData.accelYaw = .........
-
-    radioData.analogData.pitch = filterRate * (radioData.analogData.pitch + radioData.analogData.gyroPitch * gyroRate) + (1 - filterRate) * radioData.analogData.accelPitch;
-    radioData.analogData.roll = filterRate * (radioData.analogData.roll + radioData.analogData.gyroRoll * gyroRate) + (1 - filterRate) * radioData.analogData.accelRoll;
+    radioData.analogData.pitch = accelToAngle(radioData.analogData.accelPitch);
+    radioData.analogData.roll = accelToAngle(radioData.analogData.accelRoll);
 
     radioData.digitalData.pitch = analogToDigital(radioData.analogData.pitch, radioData.sensorToDigitalData.angleLimitPitch);
     radioData.digitalData.roll = analogToDigital(radioData.analogData.roll, radioData.sensorToDigitalData.angleLimitRoll);
-    // TODO radioData.digitalData.yaw = .............
 
     if(isnan(radioData.digitalData.pitch) ||  isnan(radioData.digitalData.roll)) 
     {
@@ -100,95 +55,61 @@ void SensorToDigital::doFunction()
         Serial.println("Fehler: Pitch oder Roll ist NaN!");
         return;
     }
-    // TODO 90 degree flip fix
-
-    // Removed because very long execution time
-    //radioData.digitalData.altitude = filterRate * bmp->readAltitude(radioData.sensorToDigitalData.seaLevelPressure * 100) + (1 - filterRate) * radioData.digitalData.altitude; // 37 ms
-    //radioData.digitalData.temperature = bmp->readTemperature(); // 7ms
-    
 }
 
-void SensorToDigital::selectAxis(float* accelPitch, float* accelRoll, float* accelYaw, float* gyroPitch, float* gyroRoll, float* gyroYaw)
+void SensorToDigital::selectAxis()
 {
     switch (radioData.digitalData.orientation)
     {
     case RadioData::Orientation::T_UP:
-        *accelPitch = radioData.rawData.accelX;
-        *accelRoll = radioData.rawData.accelY;
-        *accelYaw = radioData.rawData.accelZ;
-        *gyroPitch = radioData.rawData.gyroY;
-        *gyroRoll = radioData.rawData.gyroX;
-        *gyroYaw = radioData.rawData.gyroZ;
-        break;
-    case RadioData::Orientation::T_LEFT:
-        *accelPitch = radioData.rawData.accelX;
-        *accelRoll = radioData.rawData.accelZ;
-        *accelYaw = -radioData.rawData.accelY;
-        *gyroPitch = -radioData.rawData.gyroZ;
-        *gyroRoll = radioData.rawData.gyroX;
-        *gyroYaw = radioData.rawData.gyroY;
-        break;
-    case RadioData::Orientation::T_RIGHT:
-        *accelPitch = radioData.rawData.accelX;
-        *accelRoll = -radioData.rawData.accelZ;
-        *accelYaw = radioData.rawData.accelY;
-        *gyroPitch = radioData.rawData.gyroZ;
-        *gyroRoll = radioData.rawData.gyroX;
-        *gyroYaw = -radioData.rawData.gyroY;
-        break;
-    case RadioData::Orientation::T_LEFT_DOWN:
-        *accelPitch = radioData.rawData.accelY;
-        *accelRoll = radioData.rawData.accelZ;
-        *accelYaw = radioData.rawData.accelX;
-        *gyroPitch = -radioData.rawData.gyroZ;
-        *gyroRoll = -radioData.rawData.gyroY;
-        *gyroYaw = radioData.rawData.gyroX;
-        break;
-    case RadioData::Orientation::T_LEFT_UP:
-        *accelPitch = -radioData.rawData.accelY;
-        *accelRoll = radioData.rawData.accelZ;
-        *accelYaw = -radioData.rawData.accelX;
-        *gyroPitch = -radioData.rawData.gyroZ;
-        *gyroRoll = radioData.rawData.gyroY;
-        *gyroYaw = -radioData.rawData.gyroX;
+        radioData.analogData.accelPitch = radioData.rawData.gravityY;
+        radioData.analogData.accelRoll = radioData.rawData.gravityZ;
         break;
     case RadioData::Orientation::T_DOWN:
-        *accelPitch = radioData.rawData.accelX;
-        *accelRoll = -radioData.rawData.accelY;
-        *accelYaw = -radioData.rawData.accelZ;
-        *gyroPitch = -radioData.rawData.gyroY;
-        *gyroRoll = radioData.rawData.gyroX;
-        *gyroYaw = -radioData.rawData.gyroZ;
+        radioData.analogData.accelPitch = radioData.rawData.gravityY;
+        radioData.analogData.accelRoll = -radioData.rawData.gravityZ;
+        break;
+    case RadioData::Orientation::T_LEFT:
+        radioData.analogData.accelPitch = radioData.rawData.gravityY;
+        radioData.analogData.accelRoll = -radioData.rawData.gravityX;
+        break;
+    case RadioData::Orientation::T_RIGHT:
+        radioData.analogData.accelPitch = radioData.rawData.gravityY;
+        radioData.analogData.accelRoll = radioData.rawData.gravityX;
+        break;
+    case RadioData::Orientation::T_LEFT_DOWN:
+        radioData.analogData.accelPitch = radioData.rawData.gravityZ;
+        radioData.analogData.accelRoll = -radioData.rawData.gravityX;
+        break;
+    case RadioData::Orientation::T_LEFT_UP:
+        radioData.analogData.accelPitch = -radioData.rawData.gravityZ;
+        radioData.analogData.accelRoll = -radioData.rawData.gravityX;
         break;
     case RadioData::Orientation::UNKNOWN:
-        *accelPitch = 0;
-        *accelRoll = 0;
-        *accelYaw = 0;
-        *gyroPitch = 0;
-        *gyroRoll = 0;
-        *gyroYaw = 0;
+        radioData.analogData.accelPitch = 0;
+        radioData.analogData.accelRoll = 0;
         break;
     }
 }
 
 void SensorToDigital::updateOrientation()
 {
-    if(radioData.functionData.armed == false) // TODO wenn im armed mode und orientation wechselt dann steuerung auf altem wert halten damit kein flipping entsteht.
+    if(radioData.functionData.armed == false) 
     {
-        if(abs(radioData.rawData.accelZ) > abs(radioData.rawData.accelX) && abs(radioData.rawData.accelZ) > abs(radioData.rawData.accelY))
+        if(abs(radioData.rawData.gravityX) > abs(radioData.rawData.gravityY) && abs(radioData.rawData.gravityX) > abs(radioData.rawData.gravityZ))
         {
-            if(radioData.rawData.accelZ > 0)
-            {
-                radioData.digitalData.orientation = RadioData::Orientation::T_UP;
-            }
-            else
+            if(radioData.rawData.gravityX > 0)
             {
                 radioData.digitalData.orientation = RadioData::Orientation::T_DOWN;
             }
+            else
+            {
+                radioData.digitalData.orientation = RadioData::Orientation::T_UP;
+            }
         }
-        else if(abs(radioData.rawData.accelX) > abs(radioData.rawData.accelY))
+        else if(abs(radioData.rawData.gravityY) > abs(radioData.rawData.gravityZ))
         {
-            if(radioData.rawData.accelX > 0)
+            if(radioData.rawData.gravityZ > 0)
             {
                 radioData.digitalData.orientation = RadioData::Orientation::T_LEFT_DOWN;
             }
@@ -199,7 +120,7 @@ void SensorToDigital::updateOrientation()
         }
         else
         {
-            if(radioData.rawData.accelY > 0)
+            if(radioData.rawData.gravityZ > 0)
             {
                 radioData.digitalData.orientation = RadioData::Orientation::T_RIGHT;
             }
@@ -220,6 +141,15 @@ void SensorToDigital::limitToRange(float &value, float min, float max)
     {
         value = max;
     }
+}
+
+float SensorToDigital::accelToAngle(float accelValue)
+{
+    // Begrenzen des Accel Wertes auf den Bereich -9.81 bis 9.81
+    limitToRange(accelValue, -9.81, 9.81);
+    // Umwandeln von Accel Wert in Winkel in Grad
+    float angle = asin(accelValue / 9.81) * (180.0 / M_PI);
+    return angle;
 }
 
 float SensorToDigital::analogToDigital(float value, const RadioData::SensorToDigitalData::AngleLimit& limit)

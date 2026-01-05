@@ -13,25 +13,24 @@
 #include "Model.hpp"
 #include "DualRate.hpp"
 #include "SensorToDigital.hpp"
+
 #include "Web.hpp"
-#include <Adafruit_MPU6050.h>
-#include <Adafruit_BMP085.h>
+#include <Adafruit_BNO055.h>
+#include <TinyGPSPlus.h>
 
 /* -------------------- Defines --------------------------------------------------------------------------------*/
-#define PIN_ACCELEROMETER_SCL 16
-#define PIN_ACCELEROMETER_SDA 18
-#define PIN_GPS_TX            12
-#define PIN_GPS_RX            13
+#define MOTION_SENSOR_ID      55
+#define MOTION_SENSOR_ADDRESS 0x29
+#define MOTION_SENSOR_BUS     0
+#define PIN_MOTION_SENSOR_SCL 6
+#define PIN_MOTION_SENSOR_SDA 5
 
-#define PIN_POWER_EN          15
-#define PIN_LCD_BL            38
-
-#define DISP_WIDTH            170
-#define DISP_HEIGHT           320
+#define GPS_SERIAL_NUM        2 // UART3
+#define PIN_GPS_TX            3
+#define PIN_GPS_RX            4
+#define GPS_BAUD              9600
 
 /* -------------------- Variable -------------------------------------------------------------------------------*/
-Adafruit_MPU6050                  mpu;
-Adafruit_BMP085                   bmp;
 uint32_t                          targetTime = 0;         
 RadioData                         radioData = RadioData();
 AnalogToDigital                   analogToDigital = AnalogToDigital(radioData);
@@ -43,10 +42,16 @@ Mixer                             mixer = Mixer(radioData);
 FunctionToChannel                 functionToChannel = FunctionToChannel(radioData);
 Transmitter                       transmitter = Transmitter(radioData);
 Model                             model = Model(radioData);
-SensorToDigital                   sensorToDigital = SensorToDigital(radioData, &mpu, &bmp);
+SensorToDigital                   sensorToDigital = SensorToDigital(radioData, &bno, &gps);
+
+TwoWire                           I2CBNO = TwoWire(MOTION_SENSOR_BUS);
+Adafruit_BNO055                   bno = Adafruit_BNO055(MOTION_SENSOR_ID, MOTION_SENSOR_ADDRESS, &I2CBNO);
+TinyGPSPlus                       gps;
 /* -------------------- Functions Prototypes -------------------------------------------------------------------*/
 void myMainTask(void *pvParameters);
 void mySerialTask(void *pvParameters);
+void initBNO055(void);
+void initGps(void);
 
 /* -------------------- Setup ----------------------------------------------------------------------------------*/
 void setup() {
@@ -58,24 +63,20 @@ void setup() {
   esp_log_level_set("*", ESP_LOG_VERBOSE);
 
   // Factory Reset FLASH
-  //radioData.resetData();
+  radioData.resetData();
 
   // Load Models
   radioData.loadGlobalData();
   radioData.loadModelData();
-  // radioData.storeGlobalData();
-  // radioData.storeModelData();
+  radioData.storeGlobalData();
+  radioData.storeModelData();
   Serial.println("Model loaded");
 
-
-  // MPU6050 Senosr Board
-  Wire.begin(PIN_ACCELEROMETER_SDA,PIN_ACCELEROMETER_SCL);
-  mpu.begin();
-  mpu.setAccelerometerRange(MPU6050_RANGE_2_G);
-  mpu.setGyroRange(MPU6050_RANGE_250_DEG);
-  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
-  bmp.begin();
-  Serial.println("Sensor ready");
+  // Motion Sensor Init
+  initBNO055();
+  
+  // GPS Init
+  // initGps();
 
   // Init Web
   xTaskCreatePinnedToCore(initWeb, "InitWeb", 10000, NULL, 1, NULL, 0);
@@ -85,6 +86,52 @@ void setup() {
   // xTaskCreatePinnedToCore(mySerialTask, "SerialTask", 10000, NULL, 1, NULL, 1);
   
   Serial.println("Init done");
+}
+
+void initBNO055() {
+  if (!I2CBNO.begin(PIN_MOTION_SENSOR_SDA, PIN_MOTION_SENSOR_SCL)) {
+    Serial.println("❌ I2C-Bus Fehler BNO055!");
+    while (1) { digitalWrite(LED_BUILTIN, millis() % 200 < 100); delay(50); }
+  }
+  
+  if (!bno.begin()) {
+    Serial.println("❌ Kein BNO055 gefunden!");
+    while (1) { digitalWrite(LED_BUILTIN, millis() % 200 < 100); delay(50); }
+  }
+  
+  Serial.println("✅ BNO055 gefunden & initialisiert");
+  
+  // Fixed Kalibrierung (Ihre Werte)
+  adafruit_bno055_offsets_t fixedCalib = {
+    0, 4, -8,     // Accel X,Y,Z
+    29, 366, 245, // Mag X,Y,Z  
+    0, -3, -1,    // Gyro X,Y,Z
+    1000, 602     // Accel/Mag Radius
+  };
+  
+  bno.setExtCrystalUse(true);
+  bno.setSensorOffsets(fixedCalib);
+  bno.setMode(OPERATION_MODE_NDOF);
+  
+  Serial.println("✅ BNO055 Kalibrierung geladen");
+  
+  // Initial Status
+  uint8_t sys, gyro, accel, mag;
+  bno.getCalibration(&sys, &gyro, &accel, &mag);
+  Serial.printf("Initial Kalib: SYS:%d G:%d A:%d M:%d\n", sys, gyro, accel, mag);
+}
+
+void initGps() {
+  Serial2.begin(GPS_BAUD, SERIAL_8N1, PIN_GPS_RX, PIN_GPS_TX);
+  delay(200);
+  
+  Serial.println("=== ATGM336H GPS + TinyGPS++ ===");
+  Serial.printf("GPS UART3: RX=%d, TX=%d, Baud=%d\n", PIN_GPS_RX, PIN_GPS_TX, GPS_BAUD);
+  
+  // TinyGPS++ PMTK-Konfig (optional)
+  Serial2.println("$PMTK220,1000*1F");  // 1Hz
+  Serial2.println("$PMTK314,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28");  // GGA+RMC
+  Serial.println("✓ GPS konfiguriert (TinyGPS++ ready)");
 }
 
 /* -------------------- Main -----------------------------------------------------------------------------------*/
