@@ -11,6 +11,8 @@
 #define SUPPORTED_CHANNELS      8
 #define CHANNEL_COUNT           16
 #define CHANNEL_NEUTRAL         992
+#define CHANNEL_MIN             172
+#define CHANNEL_MAX             1811
 
 #define PIN_LED                 43
 #define PIN_VIBRATION           44
@@ -386,15 +388,15 @@ void RadioData::loadModelData()
         sprintf(name,"ftcd.ftc.%d",i);
         functionToChannelData.functionOnChannel[i] = (Function)pref.getInt(name, NONE);
         sprintf(name,"ftcd.ulc.%d",i);
-        functionToChannelData.upperLimitChannel[i] = pref.getInt(name, 2047);
+        functionToChannelData.upperLimitChannel[i] = pref.getInt(name, CHANNEL_MAX);
         sprintf(name,"ftcd.llc.%d",i);
-        functionToChannelData.lowerLimitChannel[i] = pref.getInt(name, 0);
+        functionToChannelData.lowerLimitChannel[i] = pref.getInt(name, CHANNEL_MIN);
     }
     if(pref.isKey("ftcd.ftc.0") == false) // if no data is stored, set default values
     {
-        pref.putInt("ftcd.ftc.0", VTAIL_LEFT);
-        pref.putInt("ftcd.ftc.1", VTAIL_RIGHT);
-        pref.putInt("ftcd.ftc.2", THROTTLE);
+        functionToChannelData.functionOnChannel[0] = VTAIL_LEFT;
+        functionToChannelData.functionOnChannel[1] = VTAIL_RIGHT;
+        functionToChannelData.functionOnChannel[2] = THROTTLE;
     }
 
     readSize = pref.getBytes("md.mn", modelData.modelName, sizeof(modelData.modelName));

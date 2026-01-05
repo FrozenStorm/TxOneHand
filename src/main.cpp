@@ -31,6 +31,10 @@
 #define GPS_BAUD              9600
 
 /* -------------------- Variable -------------------------------------------------------------------------------*/
+TwoWire                           I2CBNO = TwoWire(MOTION_SENSOR_BUS);
+Adafruit_BNO055                   bno = Adafruit_BNO055(MOTION_SENSOR_ID, MOTION_SENSOR_ADDRESS, &I2CBNO);
+TinyGPSPlus                       gps;
+
 uint32_t                          targetTime = 0;         
 RadioData                         radioData = RadioData();
 AnalogToDigital                   analogToDigital = AnalogToDigital(radioData);
@@ -43,10 +47,6 @@ FunctionToChannel                 functionToChannel = FunctionToChannel(radioDat
 Transmitter                       transmitter = Transmitter(radioData);
 Model                             model = Model(radioData);
 SensorToDigital                   sensorToDigital = SensorToDigital(radioData, &bno, &gps);
-
-TwoWire                           I2CBNO = TwoWire(MOTION_SENSOR_BUS);
-Adafruit_BNO055                   bno = Adafruit_BNO055(MOTION_SENSOR_ID, MOTION_SENSOR_ADDRESS, &I2CBNO);
-TinyGPSPlus                       gps;
 /* -------------------- Functions Prototypes -------------------------------------------------------------------*/
 void myMainTask(void *pvParameters);
 void mySerialTask(void *pvParameters);
@@ -63,13 +63,13 @@ void setup() {
   esp_log_level_set("*", ESP_LOG_VERBOSE);
 
   // Factory Reset FLASH
-  radioData.resetData();
+  // radioData.resetData();
 
   // Load Models
   radioData.loadGlobalData();
   radioData.loadModelData();
-  radioData.storeGlobalData();
-  radioData.storeModelData();
+  // radioData.storeGlobalData();
+  // radioData.storeModelData();
   Serial.println("Model loaded");
 
   // Motion Sensor Init
@@ -79,11 +79,11 @@ void setup() {
   // initGps();
 
   // Init Web
-  xTaskCreatePinnedToCore(initWeb, "InitWeb", 10000, NULL, 1, NULL, 0);
+  // xTaskCreatePinnedToCore(initWeb, "InitWeb", 10000, NULL, 1, NULL, 0);
 
   // Create Tasks
   xTaskCreatePinnedToCore(myMainTask, "MainTask", 20000, NULL, 2, NULL, 1);
-  // xTaskCreatePinnedToCore(mySerialTask, "SerialTask", 10000, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(mySerialTask, "SerialTask", 10000, NULL, 1, NULL, 1);
   
   Serial.println("Init done");
 }
@@ -231,14 +231,20 @@ void mySerialTask(void *pvParameters) {
     // Serial.print("radioData.transmitterData.rxNum = "); Serial.println(radioData.transmitterData.rxNum);
     // Serial.print("radioData.transmitterData.powerValue = "); Serial.println(radioData.powerValueNames[radioData.transmitterData.powerValue]);
 
-    // Serial.println("**** FunctionToChannelData ****");
-    // for (int i = 0; i < SUPPORTED_CHANNELS; i++)
-    // {
-    //     Serial.printf("radioData.functionToChannelData.invertChannel[%d] = %d\n", i, radioData.functionToChannelData.invertChannel[i]);
-    //     Serial.printf("radioData.functionToChannelData.functionOnChannel[%d] = %s\n", i, radioData.functionNames[radioData.functionToChannelData.functionOnChannel[i]]);
-    //     Serial.printf("radioData.functionToChannelData.upperLimitChannel[%d] = %d\n", i, radioData.functionToChannelData.upperLimitChannel[i]);
-    //     Serial.printf("radioData.functionToChannelData.lowerLimitChannel[%d] = %d\n", i, radioData.functionToChannelData.lowerLimitChannel[i]);
-    // }
+    Serial.println("**** FunctionToChannelData ****");
+    for (int i = 0; i < SUPPORTED_CHANNELS; i++)
+    {
+        Serial.printf("radioData.functionToChannelData.invertChannel[%d] = %d\n", i, radioData.functionToChannelData.invertChannel[i]);
+        Serial.printf("radioData.functionToChannelData.functionOnChannel[%d] = %s\n", i, radioData.functionNames[radioData.functionToChannelData.functionOnChannel[i]]);
+        Serial.printf("radioData.functionToChannelData.upperLimitChannel[%d] = %d\n", i, radioData.functionToChannelData.upperLimitChannel[i]);
+        Serial.printf("radioData.functionToChannelData.lowerLimitChannel[%d] = %d\n", i, radioData.functionToChannelData.lowerLimitChannel[i]);
+    }
+
+    Serial.println("**** ChannelData ****");
+    for (int i = 0; i < CHANNEL_COUNT; i++)
+    {
+        Serial.printf("radioData.channelData.channel[%d] = %d\n", i, radioData.channelData.channel[i]);
+    }
 
     // Serial.println("**** RawData ****");
     // Serial.print("radioData.rawData.stickUpDown = "); Serial.println(radioData.rawData.stickUpDown);

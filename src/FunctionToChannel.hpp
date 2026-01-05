@@ -40,12 +40,11 @@ void FunctionToChannel::doFunction()
         }
         if(radioData.functionToChannelData.invertChannel[i] == true) value = -value;
 
-        value = (value + 1) * 1023;
+        value = value * (CHANNEL_MAX - CHANNEL_MIN) / 2 + CHANNEL_NEUTRAL; // map from -1..1 to 172..1811);
 
         if(value > radioData.functionToChannelData.upperLimitChannel[i]) value = radioData.functionToChannelData.upperLimitChannel[i];
         if(value < radioData.functionToChannelData.lowerLimitChannel[i]) value = radioData.functionToChannelData.lowerLimitChannel[i];
 
         radioData.channelData.channel[i] = value; // Nur eine Zuweisung damit es Interrupt sicher ist
     }
-    radioData.channelData.channel[13] = radioData.channelData.channel[2]; // Failsafe oder so Begrenzung auf Kanal 14 von Throttle
 }
